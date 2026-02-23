@@ -12,7 +12,7 @@ Comprehensive diagnostic script that probes an OpenClaw installation to gather a
 
 ```bash
 # Download the script
-curl -O https://raw.githubusercontent.com/yourusername/ongarde.io/main/tools/openclaw-diagnostic.sh
+curl -O https://raw.githubusercontent.com/AntimatterEnterprises/ongarde/main/tools/openclaw-diagnostic.sh
 
 # Make it executable
 chmod +x openclaw-diagnostic.sh
@@ -30,7 +30,7 @@ cat openclaw-report.txt | nc termbin.com 9999  # Creates shareable link
 **Or if you have the repo cloned:**
 
 ```bash
-cd ongarde.io/tools
+cd ongarde/tools
 bash openclaw-diagnostic.sh > ~/openclaw-report.txt
 ```
 

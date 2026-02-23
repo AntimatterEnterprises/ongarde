@@ -203,6 +203,7 @@ docs/compliance-marketing-brief.md
 docs/OPENCLAW_INVESTIGATION.md
 docs/STREAMING_SECURITY_MODEL.md
 benchmarks/do-droplet-results-2026-02-21.md
+benchmarks/*.json
 tools/check-repo-updates.sh
 
 # Website (separate repo)

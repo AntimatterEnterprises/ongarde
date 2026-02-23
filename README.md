@@ -76,15 +76,19 @@ See [QUICKSTART.md](QUICKSTART.md) for full setup details.
 
 ## Performance
 
-Benchmarked on a 1 vCPU / 1GB DigitalOcean droplet:
+Benchmarked on a **2 vCPU / 4 GB DigitalOcean Droplet** (recommended production hardware):
 
-| Operation | p50 | p99 |
-|-----------|-----|-----|
-| Regex scan | < 1ms | < 2ms |
-| Full scan (regex + Presidio) | < 20ms | < 45ms |
-| Proxy overhead (total) | < 30ms | < 50ms |
+| Operation | Input size | p50 | p99 |
+|-----------|------------|-----|-----|
+| Regex scan (credentials, shell commands) | up to 8 KB | < 0.5ms | < 1ms |
+| Full scan (regex + NLP/PII detection) | 100 chars (~75 tokens) | 8ms | 9ms |
+| Full scan (regex + NLP/PII detection) | 500 chars (~375 tokens) | 16ms | 20ms |
+| Full scan (regex + NLP/PII detection) | 1,000 chars (~750 tokens) | 28ms | 33ms |
+| Streaming window scan | 512-char window | < 0.3ms | < 0.2ms |
 
-**Target: < 50ms total overhead.** See [`benchmarks/`](benchmarks/) for raw results.
+**Target: < 50ms total overhead — met across all typical LLM prompt sizes.**
+
+OnGarde auto-calibrates at startup: it benchmarks scan latency on your hardware and adjusts the NLP sync threshold accordingly. On slower or single-core machines it automatically reduces the Presidio scan cap to stay within budget — no manual tuning required.
 
 ---
 
@@ -160,8 +164,6 @@ pytest tests/ --cov=app --cov-report=term-missing
 
 - [QUICKSTART.md](QUICKSTART.md) — Setup and configuration
 - [CHANGELOG.md](CHANGELOG.md) — Release history
-- [docs/STREAMING_SECURITY_MODEL.md](docs/STREAMING_SECURITY_MODEL.md) — Streaming security spec
-- [docs/OPENCLAW_INVESTIGATION.md](docs/OPENCLAW_INVESTIGATION.md) — OpenClaw integration deep-dive
 - [docs/deployment.md](docs/deployment.md) — Production deployment guide
 
 ---
@@ -181,6 +183,4 @@ MIT — see [LICENSE](LICENSE).
 ## Links
 
 - **Website:** [ongarde.io](https://ongarde.io)
-- **Issues:** [github.com/AntimatterEnterprises/ongarde/issues](https://github.com/AntimatterEnterprises/ongarde/issues)
-- **Security:** security@ongarde.io
-- **General:** hello@ongarde.io
+- **Issues / Contact:** [github.com/AntimatterEnterprises/ongarde/issues](https://github.com/AntimatterEnterprises/ongarde/issues)
