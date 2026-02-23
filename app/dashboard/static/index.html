@@ -1,0 +1,1797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1024">
+  <title>OnGarde Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ─── CSS Design System ──────────────────────────────────────────────── */
+    :root {
+      /* Base colors */
+      --bg-base:         #0f0f18;
+      --bg-card:         #1a1a2e;
+      --bg-card-border:  #2a2a45;
+      --bg-card-hover:   #1f1f35;
+
+      /* Brand */
+      --brand-purple:    #667eea;
+      --brand-gradient:  linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+      /* Risk levels */
+      --risk-critical:   #e53e3e;
+      --risk-high:       #dd6b20;
+      --risk-medium:     #d69e2e;
+      --risk-low:        #718096;
+
+      /* Text */
+      --text-primary:    #e2e8f0;
+      --text-muted:      #718096;
+      --text-accent:     #667eea;
+
+      /* Status */
+      --status-online:   #48bb78;
+      --status-offline:  #e53e3e;
+      --status-warning:  #d69e2e;
+
+      /* Quota */
+      --quota-ok:        #48bb78;
+      --quota-warn:      #d69e2e;
+      --quota-limit:     #e53e3e;
+    }
+
+    /* ─── Reset + Base ───────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg-base);
+      color: var(--text-primary);
+      min-width: 1024px;
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .monospace {
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
+    }
+
+    .text-muted { color: var(--text-muted); }
+    .text-primary { color: var(--text-primary); }
+    .italic { font-style: italic; }
+
+    /* ─── Header ─────────────────────────────────────────────────────────── */
+    #main-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      height: 56px;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--bg-card-border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      transition: background 0.3s ease;
+    }
+
+    #main-header.active {
+      background: var(--brand-gradient);
+      border-bottom-color: transparent;
+    }
+
+    .header-brand {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    #header-status-pill {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      background: rgba(255,255,255,0.15);
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    #header-status-pill.online  { background: rgba(72,187,120,0.2); color: var(--status-online); }
+    #header-status-pill.offline { background: rgba(229,62,62,0.2);  color: var(--status-offline); }
+    #header-status-pill.warning { background: rgba(214,158,46,0.2); color: var(--status-warning); }
+
+    #countdown {
+      font-size: 12px;
+      color: rgba(255,255,255,0.6);
+      font-variant-numeric: tabular-nums;
+    }
+
+    #main-header.active #countdown { color: rgba(255,255,255,0.7); }
+
+    #header-lite-badge {
+      display: none;
+      border: 1px solid rgba(255,255,255,0.5);
+      color: rgba(255,255,255,0.8);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    /* ─── Layout ─────────────────────────────────────────────────────────── */
+    .dashboard-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    /* Top row: 3 equal cards */
+    .grid-top {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    /* Middle row: 4fr + 8fr */
+    .grid-middle {
+      display: grid;
+      grid-template-columns: 4fr 8fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    /* Bottom: full-width sections */
+    .grid-full {
+      margin-bottom: 20px;
+    }
+
+    /* ─── Card Component ─────────────────────────────────────────────────── */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--bg-card-border);
+      border-radius: 8px;
+      padding: 20px;
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+
+    .card-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    /* ─── Status Card ────────────────────────────────────────────────────── */
+    #status-card { cursor: pointer; }
+    #status-card:hover { border-color: var(--brand-purple); }
+
+    #status-card.active {
+      background: linear-gradient(135deg, rgba(102,126,234,0.12) 0%, rgba(118,75,162,0.12) 100%);
+      border-color: var(--brand-purple);
+    }
+
+    #status-card.offline {
+      background: rgba(229,62,62,0.04);
+      border-color: rgba(229,62,62,0.4);
+    }
+
+    #status-card.warning {
+      background: rgba(214,158,46,0.04);
+      border-color: rgba(214,158,46,0.4);
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 8px;
+      background: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .status-dot.online  { background: var(--status-online); }
+    .status-dot.offline { background: var(--status-offline); }
+    .status-dot.warning { background: var(--status-warning); }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    .status-dot.pulse { animation: pulse 2s ease-in-out infinite; }
+
+    .status-main {
+      display: flex;
+      align-items: center;
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .status-sub {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .status-warning-text {
+      color: var(--status-warning);
+      font-size: 13px;
+      margin-top: 6px;
+    }
+
+    .lite-badge {
+      display: inline-block;
+      border: 1px solid var(--brand-purple);
+      color: var(--brand-purple);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 4px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    /* ─── Counters ───────────────────────────────────────────────────────── */
+    .counter-big {
+      font-size: 36px;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .counter-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: lowercase;
+      margin-bottom: 14px;
+    }
+
+    .counter-month {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .counter-month-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-left: 6px;
+    }
+
+    .risk-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 16px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--bg-card-border);
+    }
+
+    .risk-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+    }
+
+    .risk-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .risk-dot.critical { background: var(--risk-critical); }
+    .risk-dot.high     { background: var(--risk-high); }
+    .risk-dot.medium   { background: var(--risk-medium); }
+    .risk-dot.low      { background: var(--risk-low); }
+
+    .zero-blocks-msg {
+      color: var(--text-muted);
+      font-size: 13px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--bg-card-border);
+      font-style: italic;
+    }
+
+    /* ─── Scanner Health ─────────────────────────────────────────────────── */
+    .mode-pill {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    .mode-pill.full { background: var(--brand-purple); color: white; }
+    .mode-pill.lite { border: 1px solid var(--brand-purple); color: var(--brand-purple); background: transparent; }
+
+    .calib-badge {
+      display: inline-block;
+      padding: 1px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      background: rgba(102,126,234,0.12);
+      color: var(--brand-purple);
+      text-transform: capitalize;
+      margin-left: 8px;
+    }
+
+    .scanner-stat {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .scanner-stat strong {
+      color: var(--text-primary);
+    }
+
+    .scanner-health-main {
+      display: flex;
+      align-items: center;
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .queue-alert {
+      color: var(--status-warning);
+      font-size: 12px;
+      margin-top: 6px;
+      display: none;
+    }
+
+    .entity-list {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 10px;
+      line-height: 1.8;
+    }
+
+    /* ─── Quota Card ─────────────────────────────────────────────────────── */
+    .quota-numbers {
+      font-size: 15px;
+      margin-bottom: 12px;
+    }
+
+    .quota-count {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .progress-bar-container {
+      background: rgba(255,255,255,0.08);
+      border-radius: 4px;
+      height: 8px;
+      margin: 12px 0;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.4s ease, background-color 0.4s ease;
+      background: var(--quota-ok);
+      min-width: 2px;
+    }
+
+    .progress-bar-fill.warn  { background: var(--quota-warn); }
+    .progress-bar-fill.limit { background: var(--quota-limit); }
+
+    .quota-pct {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: right;
+    }
+
+    .quota-msg {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+
+    .quota-cta {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 6px 16px;
+      background: var(--risk-critical);
+      color: white;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .quota-cta:hover { opacity: 0.85; }
+
+    .quota-self-hosted {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.8;
+      margin-top: 8px;
+    }
+
+    .quota-self-hosted .audit-path {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-accent);
+    }
+
+    .quota-warning-icon {
+      color: var(--status-warning);
+      float: right;
+      font-size: 16px;
+    }
+
+    /* ─── API Key Card ───────────────────────────────────────────────────── */
+    #api-key-card .card-title {
+      margin-bottom: 12px;
+    }
+
+    .key-masked {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 15px;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .key-dots { color: var(--text-muted); }
+    .key-suffix { color: var(--text-primary); font-weight: 600; }
+
+    .key-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .key-meta span { margin-right: 16px; }
+
+    .btn {
+      padding: 7px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.15s ease, transform 0.1s ease;
+      font-family: inherit;
+    }
+
+    .btn:hover { opacity: 0.85; }
+    .btn:active { transform: scale(0.98); }
+
+    .btn-primary {
+      background: var(--brand-gradient);
+      color: white;
+    }
+
+    .btn-danger {
+      background: var(--risk-critical);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.08);
+      color: var(--text-primary);
+      border: 1px solid var(--bg-card-border);
+    }
+
+    .btn-secondary:hover { background: rgba(255,255,255,0.12); }
+
+    /* Confirmation dialog (inline, not a modal) */
+    .key-confirm-dialog {
+      background: rgba(229,62,62,0.06);
+      border: 1px solid rgba(229,62,62,0.25);
+      border-radius: 6px;
+      padding: 16px;
+      margin-top: 12px;
+    }
+
+    .key-confirm-dialog h4 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--risk-critical);
+      margin-bottom: 8px;
+    }
+
+    .key-confirm-dialog p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      line-height: 1.6;
+    }
+
+    .key-confirm-dialog .btn-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    /* New key display */
+    .new-key-box {
+      background: rgba(72,187,120,0.06);
+      border: 1px solid rgba(72,187,120,0.25);
+      border-radius: 6px;
+      padding: 16px;
+      margin-top: 12px;
+    }
+
+    .new-key-box .success-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--status-online);
+      margin-bottom: 8px;
+    }
+
+    .new-key-box .copy-instruction {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .new-key-value {
+      background: var(--bg-base);
+      border: 1px solid var(--bg-card-border);
+      border-radius: 4px;
+      padding: 10px 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--status-online);
+      word-break: break-all;
+      margin-bottom: 12px;
+    }
+
+    .new-key-box .btn-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* ─── Aha Moment Card ────────────────────────────────────────────────── */
+    #aha-card {
+      display: none;
+      background: var(--brand-gradient);
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 20px;
+      position: relative;
+      text-align: center;
+      color: white;
+      border: none;
+    }
+
+    #aha-card h3 {
+      font-size: 22px;
+      font-weight: 700;
+      color: white;
+      margin: 8px 0;
+    }
+
+    #aha-card p {
+      color: rgba(255,255,255,0.92);
+      font-size: 15px;
+      margin: 4px 0;
+    }
+
+    .aha-emoji { font-size: 36px; margin-bottom: 8px; }
+
+    .aha-tagline {
+      font-size: 18px;
+      font-weight: 600;
+      margin-top: 6px !important;
+    }
+
+    .aha-dismiss {
+      position: absolute;
+      top: 12px; right: 12px;
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+
+    .aha-dismiss:hover { background: rgba(255,255,255,0.35); }
+
+    /* ─── Events Section ─────────────────────────────────────────────────── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .section-badge {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .events-container {
+      background: var(--bg-card);
+      border: 1px solid var(--bg-card-border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .event-row {
+      display: grid;
+      grid-template-columns: 110px 1fr auto;
+      align-items: start;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--bg-card-border);
+      cursor: pointer;
+      position: relative;
+      transition: background 0.1s ease;
+      gap: 12px;
+    }
+
+    .event-row:last-child { border-bottom: none; }
+    .event-row:hover { background: var(--bg-card-hover); }
+
+    .event-row:hover .view-details {
+      opacity: 1;
+    }
+
+    .event-badge {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      padding-top: 1px;
+    }
+
+    .event-badge .badge-dot {
+      width: 8px; height: 8px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .event-main { min-width: 0; }
+
+    .event-rule {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .event-excerpt {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-style: italic;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .event-right {
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .event-time {
+      font-size: 12px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .direction-pill {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 1px 6px;
+      border-radius: 3px;
+      border: 1px solid var(--bg-card-border);
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    .view-details {
+      display: block;
+      font-size: 12px;
+      color: var(--text-accent);
+      opacity: 0;
+      transition: opacity 0.15s;
+      margin-top: 5px;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .events-empty {
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    /* ─── Event Detail Drawer ────────────────────────────────────────────── */
+    #event-drawer {
+      display: none;
+      position: fixed;
+      top: 0; right: 0;
+      width: 480px;
+      height: 100vh;
+      background: var(--bg-card);
+      border-left: 1px solid var(--bg-card-border);
+      overflow-y: auto;
+      z-index: 200;
+      box-shadow: -4px 0 24px rgba(0,0,0,0.5);
+    }
+
+    .drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--bg-card-border);
+      position: sticky;
+      top: 0;
+      background: var(--bg-card);
+      z-index: 1;
+    }
+
+    .drawer-header h3 {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .drawer-close {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 20px;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: background 0.15s;
+      font-family: inherit;
+    }
+
+    .drawer-close:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+
+    .drawer-body { padding: 24px; }
+
+    .drawer-section-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin: 20px 0 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--bg-card-border);
+    }
+
+    .drawer-section-title:first-child { margin-top: 0; }
+
+    .detail-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+
+    .detail-label {
+      color: var(--text-muted);
+      flex-shrink: 0;
+      width: 90px;
+    }
+
+    .detail-value {
+      color: var(--text-primary);
+      font-family: 'JetBrains Mono', monospace;
+      word-break: break-all;
+    }
+
+    .code-block {
+      background: var(--bg-base);
+      border: 1px solid var(--bg-card-border);
+      border-radius: 6px;
+      padding: 12px 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-primary);
+      white-space: pre-wrap;
+      word-break: break-all;
+      margin: 10px 0;
+      line-height: 1.6;
+    }
+
+    .copy-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: var(--brand-gradient);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      font-family: inherit;
+      margin-top: 6px;
+    }
+
+    .copy-btn:hover { opacity: 0.85; }
+    .copy-btn.success { background: var(--status-online); }
+
+    .reload-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 12px;
+      line-height: 1.6;
+    }
+
+    .reload-hint code {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-accent);
+      background: rgba(102,126,234,0.1);
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+
+    /* Drawer backdrop */
+    #drawer-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 199;
+    }
+
+    /* ─── Toast ──────────────────────────────────────────────────────────── */
+    #toast {
+      display: none;
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--bg-card);
+      border: 1px solid var(--bg-card-border);
+      border-left: 3px solid var(--status-online);
+      border-radius: 8px;
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      z-index: 300;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+      animation: slideInUp 0.2s ease;
+    }
+
+    @keyframes slideInUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to   { transform: translateY(0); opacity: 1; }
+    }
+
+    /* ─── Misc ───────────────────────────────────────────────────────────── */
+    .loading-placeholder {
+      background: rgba(255,255,255,0.05);
+      border-radius: 4px;
+      height: 16px;
+      animation: shimmer 1.5s ease-in-out infinite;
+    }
+
+    @keyframes shimmer {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 0.7; }
+    }
+
+    hr.divider {
+      border: none;
+      border-top: 1px solid var(--bg-card-border);
+      margin: 16px 0;
+    }
+
+  </style>
+</head>
+<body>
+
+<!-- ─── Header ────────────────────────────────────────────────────────────── -->
+<header id="main-header">
+  <div class="header-brand" onclick="window.location='/dashboard'">
+    🤺 OnGarde
+    <span id="header-lite-badge">[LITE]</span>
+  </div>
+  <div class="header-right">
+    <div id="header-status-pill" class="online">● En Garde</div>
+    <div id="countdown">Refresh in 10s</div>
+  </div>
+</header>
+
+<!-- ─── Main Content ──────────────────────────────────────────────────────── -->
+<main class="dashboard-content">
+
+  <!-- Top Row: Status | Requests | Blocks -->
+  <div class="grid-top">
+
+    <!-- Feature 1: Status Card -->
+    <div class="card" id="status-card" onclick="openHealthJson()">
+      <div class="card-title">Status</div>
+      <div class="status-main">
+        <span class="status-dot online pulse" id="status-dot"></span>
+        <span id="status-text">En Garde 🤺</span>
+        <span class="lite-badge" id="status-lite-badge" style="display:none">LITE</span>
+      </div>
+      <div class="status-sub" id="status-sub">
+        Proxy running · Port 4242<br>
+        Scanner healthy
+      </div>
+      <div class="status-warning-text" id="status-warning-text" style="display:none">
+        ⚠ Scanner degraded — all requests are being blocked
+      </div>
+    </div>
+
+    <!-- Feature 2: Request Counter -->
+    <div class="card" id="requests-card">
+      <div class="card-title">Requests</div>
+      <div class="counter-big" id="req-today">—</div>
+      <div class="counter-label">today</div>
+      <div>
+        <span class="counter-month" id="req-month">—</span>
+        <span class="counter-month-label">this month</span>
+      </div>
+    </div>
+
+    <!-- Feature 3: Block Counter -->
+    <div class="card" id="blocks-card">
+      <div class="card-title">Blocks</div>
+      <div class="counter-big" id="blocks-today" style="color: var(--text-primary)">—</div>
+      <div class="counter-label">today</div>
+      <div>
+        <span class="counter-month" id="blocks-month">—</span>
+        <span class="counter-month-label">this month</span>
+      </div>
+      <!-- Risk breakdown -->
+      <div class="risk-grid" id="risk-breakdown" style="display:none">
+        <div class="risk-item">
+          <div class="risk-dot critical"></div>
+          <span>CRITICAL</span>
+          <strong id="risk-critical" style="margin-left:auto">0</strong>
+        </div>
+        <div class="risk-item">
+          <div class="risk-dot high"></div>
+          <span>HIGH</span>
+          <strong id="risk-high" style="margin-left:auto">0</strong>
+        </div>
+        <div class="risk-item">
+          <div class="risk-dot medium"></div>
+          <span>MEDIUM</span>
+          <strong id="risk-medium" style="margin-left:auto">0</strong>
+        </div>
+        <div class="risk-item">
+          <div class="risk-dot low"></div>
+          <span>LOW</span>
+          <strong id="risk-low" style="margin-left:auto">0</strong>
+        </div>
+      </div>
+      <!-- Zero blocks state -->
+      <div class="zero-blocks-msg" id="zero-blocks-msg" style="display:none">
+        No threats detected today.<br>Your parries are working.
+      </div>
+    </div>
+
+  </div><!-- /.grid-top -->
+
+  <!-- Middle Row: Scanner Health | Quota -->
+  <div class="grid-middle">
+
+    <!-- Feature 4: Scanner Health -->
+    <div class="card" id="scanner-card">
+      <div class="card-title">
+        Scanner Health
+        <span class="mode-pill full" id="scanner-mode-pill">Full</span>
+        <span class="calib-badge" id="calib-tier" style="display:none">—</span>
+      </div>
+      <div class="scanner-health-main">
+        <span class="status-dot online" id="scanner-dot"></span>
+        <span id="scanner-status-text">healthy</span>
+      </div>
+      <div class="scanner-stat">
+        Avg scan: <strong id="scanner-avg">—</strong>
+        &nbsp;|&nbsp;
+        p99: <strong id="scanner-p99">—</strong>
+      </div>
+      <div class="queue-alert" id="scanner-queue-alert">⚠ Scanner backed up</div>
+      <div class="entity-list" id="scanner-entity-list">—</div>
+    </div>
+
+    <!-- Feature 6: Quota Display -->
+    <div class="card" id="quota-card">
+      <div class="card-title">
+        Quota
+        <span class="quota-warning-icon" id="quota-warning-icon" style="display:none">⚠</span>
+      </div>
+      <!-- Normal / warn / limit state -->
+      <div id="quota-normal-view">
+        <div class="quota-numbers">
+          <span class="quota-count" id="quota-used">—</span>
+          <span class="text-muted" id="quota-of-label" style="display:none"> of <strong id="quota-limit">—</strong> requests used this month</span>
+        </div>
+        <div class="progress-bar-container" id="quota-bar-container" style="display:none">
+          <div class="progress-bar-fill" id="quota-bar-fill" style="width:0%"></div>
+        </div>
+        <div class="quota-pct" id="quota-pct" style="display:none">0%</div>
+        <div class="quota-msg" id="quota-msg"></div>
+        <a href="https://ongarde.io/upgrade" target="_blank" class="quota-cta" id="quota-cta" style="display:none">
+          Upgrade → ongarde.io/upgrade
+        </a>
+      </div>
+      <!-- Self-hosted state -->
+      <div id="quota-self-hosted-view" style="display:none">
+        <div class="quota-count" style="color: var(--status-online)">No quota limit</div>
+        <div class="quota-self-hosted">
+          Self-hosted installation<br>
+          Audit storage: <span class="audit-path" id="audit-path">~/.ongarde/audit.db</span><br>
+          90-day event retention · auto-pruned daily
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /.grid-middle -->
+
+  <!-- Feature 5: Recent Blocked Events (full-width) -->
+  <div class="grid-full" id="events-section">
+    <!-- Aha Moment Card (shown once on first block) -->
+    <div id="aha-card">
+      <button class="aha-dismiss" onclick="dismissAhaMoment()" title="Dismiss">×</button>
+      <div class="aha-emoji">🎉</div>
+      <h3>Your first block!</h3>
+      <p>OnGarde just parried a threat — your agents are protected.</p>
+      <p class="aha-tagline">En Garde! 🤺</p>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">Recent Blocked Events</div>
+      <div class="section-badge" id="events-count-badge">(loading…)</div>
+    </div>
+
+    <div class="events-container" id="events-list">
+      <div class="events-empty">Loading events…</div>
+    </div>
+  </div>
+
+  <!-- Feature 7: API Key Management (full-width) -->
+  <div class="grid-full">
+    <div class="card" id="api-key-card">
+      <div class="card-title">API Key</div>
+      <div id="key-view-idle">
+        <div class="key-masked">
+          <span class="key-dots" id="key-masked-display">ong-••••••••••••••••••••••••••••</span>
+          <span class="key-suffix" id="key-suffix"></span>
+        </div>
+        <div class="key-meta">
+          <span id="key-created-label" style="display:none">Created: <strong id="key-created">—</strong></span>
+          <span id="key-last-used-label" style="display:none">Last used: <strong id="key-last-used">—</strong></span>
+        </div>
+        <button class="btn btn-secondary" onclick="showRotateConfirmation()">↻ Rotate key</button>
+        <p style="margin-top:10px;font-size:12px;color:var(--text-muted);">
+          OnGarde uses bcrypt — the full key cannot be retrieved after initial display.<br>
+          The masked display (ong-••••…XXXX) is for identification only.
+        </p>
+      </div>
+
+      <!-- Confirmation dialog -->
+      <div id="key-confirm-dialog" style="display:none">
+        <div class="key-confirm-dialog">
+          <h4>⚠ Rotate API key?</h4>
+          <p>This immediately invalidates your current key.<br>
+             Any active connections using it will fail.<br>
+             Update your OpenClaw config with the new key before rotating.</p>
+          <div class="btn-row">
+            <button class="btn btn-danger" onclick="confirmRotate()" id="btn-rotate-confirm">Rotate — I understand</button>
+            <button class="btn btn-secondary" onclick="cancelRotate()">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- New key display (shown once after rotation) -->
+      <div id="key-new-display" style="display:none">
+        <div class="new-key-box">
+          <div class="success-label">✓ Key rotated.</div>
+          <div class="copy-instruction">New key (copy now — shown once):</div>
+          <div class="new-key-value monospace" id="new-key-value">—</div>
+          <div class="btn-row">
+            <button class="btn btn-primary" id="copy-new-key-btn" onclick="copyNewKey()">📋 Copy new key</button>
+            <button class="btn btn-secondary" onclick="dismissNewKey()">I've saved my key — dismiss</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ─── Event Detail Drawer ────────────────────────────────────────────────── -->
+<div id="drawer-backdrop" onclick="closeDrawer()"></div>
+<div id="event-drawer">
+  <div class="drawer-header">
+    <h3>Block Event Detail</h3>
+    <button class="drawer-close" onclick="closeDrawer()">×</button>
+  </div>
+  <div class="drawer-body" id="drawer-body"></div>
+</div>
+
+<!-- ─── Toast Notification ────────────────────────────────────────────────── -->
+<div id="toast">● Config reloaded — allowlist updated</div>
+
+<!-- ─── JavaScript ────────────────────────────────────────────────────────── -->
+<script>
+'use strict';
+
+/* ─── State ─────────────────────────────────────────────────────────────── */
+const STATE = {
+  countdown: 10,
+  countdownTimer: null,
+  pollTimer: null,
+  lastSeen: null,          // timestamp of last successful health poll
+  keyId: null,             // ID of current API key
+  newKeyPlaintext: null,   // shown once after rotation
+  lastConfigReload: null,  // for hot-reload toast detection
+};
+
+/* ─── Risk level helpers ─────────────────────────────────────────────────── */
+const RISK_COLORS = {
+  CRITICAL: 'var(--risk-critical)',
+  HIGH:     'var(--risk-high)',
+  MEDIUM:   'var(--risk-medium)',
+  LOW:      'var(--risk-low)',
+};
+
+function riskColor(level) {
+  return RISK_COLORS[level] || 'var(--text-muted)';
+}
+
+/* ─── Relative time ──────────────────────────────────────────────────────── */
+function relativeTime(isoStr) {
+  if (!isoStr) return 'unknown';
+  const seconds = Math.floor((Date.now() - new Date(isoStr)) / 1000);
+  if (seconds < 5)    return 'just now';
+  if (seconds < 60)   return `${seconds} seconds ago`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)} minutes ago`;
+  if (seconds < 86400)return `${Math.floor(seconds / 3600)} hours ago`;
+  return `${Math.floor(seconds / 86400)} days ago`;
+}
+
+/* ─── Countdown timer ────────────────────────────────────────────────────── */
+function startCountdown() {
+  STATE.countdown = 10;
+  if (STATE.countdownTimer) clearInterval(STATE.countdownTimer);
+  STATE.countdownTimer = setInterval(() => {
+    STATE.countdown = Math.max(0, STATE.countdown - 1);
+    document.getElementById('countdown').textContent =
+      `Refresh in ${STATE.countdown}s`;
+  }, 1000);
+}
+
+/* ─── Toast ──────────────────────────────────────────────────────────────── */
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.style.display = 'block';
+  setTimeout(() => { toast.style.display = 'none'; }, 5000);
+}
+
+/* ─── Status Card ────────────────────────────────────────────────────────── */
+function updateStatusCard(health) {
+  const card    = document.getElementById('status-card');
+  const dot     = document.getElementById('status-dot');
+  const text    = document.getElementById('status-text');
+  const sub     = document.getElementById('status-sub');
+  const warn    = document.getElementById('status-warning-text');
+  const liteBadge = document.getElementById('status-lite-badge');
+  const header  = document.getElementById('main-header');
+  const hpill   = document.getElementById('header-status-pill');
+  const hLite   = document.getElementById('header-lite-badge');
+
+  const isLite = health && health.scanner_mode === 'lite';
+
+  if (!health) {
+    // Offline state
+    card.className = 'card offline';
+    dot.className  = 'status-dot offline';
+    text.textContent = 'Offline';
+    sub.innerHTML  = 'Proxy not responding<br>' + (STATE.lastSeen
+      ? `Last seen: ${relativeTime(STATE.lastSeen)}` : 'Connection failed');
+    warn.style.display = 'none';
+    header.className = '';
+    hpill.className = 'offline';
+    hpill.textContent = '● Offline';
+    liteBadge.style.display = 'none';
+    hLite.style.display = 'none';
+    return;
+  }
+
+  STATE.lastSeen = new Date().toISOString();
+  liteBadge.style.display = isLite ? 'inline' : 'none';
+  hLite.style.display     = isLite ? 'inline' : 'none';
+
+  const scannerOk = (health.scanner === 'healthy' || health.scanner === 'unavailable');
+
+  if (scannerOk) {
+    // Active — En Garde 🤺
+    card.className = 'card active';
+    dot.className  = 'status-dot online pulse';
+    text.textContent = 'En Garde 🤺';
+    sub.innerHTML  = `Proxy running · Port ${health.port || 4242}<br>` +
+                     (isLite ? 'Scanner: regex engine' : 'Scanner healthy');
+    warn.style.display = 'none';
+    header.className = 'active';
+    hpill.className  = 'online';
+    hpill.textContent = '● En Garde';
+  } else {
+    // Scanner error
+    card.className = 'card warning';
+    dot.className  = 'status-dot warning';
+    text.textContent = 'Scanner Error';
+    sub.innerHTML  = `Proxy running · Port ${health.port || 4242}`;
+    warn.style.display = 'block';
+    header.className = '';
+    hpill.className  = 'warning';
+    hpill.textContent = '● Scanner Error';
+  }
+}
+
+function openHealthJson() {
+  window.open('/health', '_blank');
+}
+
+/* ─── Request + Block Counters ───────────────────────────────────────────── */
+function updateCounters(data) {
+  if (!data) return;
+
+  document.getElementById('req-today').textContent =
+    (data.requests.today || 0).toLocaleString();
+  document.getElementById('req-month').textContent =
+    (data.requests.month || 0).toLocaleString();
+
+  const blocks = data.blocks;
+  const bd = data.risk_breakdown || {};
+  const hasCritical = (bd.CRITICAL || 0) > 0;
+
+  const todayEl = document.getElementById('blocks-today');
+  todayEl.textContent = (blocks.today || 0).toLocaleString();
+  todayEl.style.color = hasCritical
+    ? 'var(--risk-critical)'
+    : 'var(--text-primary)';
+
+  document.getElementById('blocks-month').textContent =
+    (blocks.month || 0).toLocaleString();
+
+  const hasBlocks = (blocks.today || 0) > 0;
+  document.getElementById('risk-breakdown').style.display  = hasBlocks ? 'grid' : 'none';
+  document.getElementById('zero-blocks-msg').style.display = hasBlocks ? 'none' : 'block';
+
+  if (hasBlocks) {
+    document.getElementById('risk-critical').textContent = bd.CRITICAL || 0;
+    document.getElementById('risk-high').textContent     = bd.HIGH || 0;
+    document.getElementById('risk-medium').textContent   = bd.MEDIUM || 0;
+    document.getElementById('risk-low').textContent      = bd.LOW || 0;
+  }
+}
+
+/* ─── Scanner Health ─────────────────────────────────────────────────────── */
+function updateScannerHealth(data) {
+  if (!data) return;
+
+  const isLite = data.scanner_mode === 'lite';
+  const dot    = document.getElementById('scanner-dot');
+  const txt    = document.getElementById('scanner-status-text');
+  const pill   = document.getElementById('scanner-mode-pill');
+  const calib  = document.getElementById('calib-tier');
+  const avg    = document.getElementById('scanner-avg');
+  const p99    = document.getElementById('scanner-p99');
+  const queue  = document.getElementById('scanner-queue-alert');
+  const elist  = document.getElementById('scanner-entity-list');
+
+  // Health dot
+  const dotClasses = {
+    healthy: 'status-dot online',
+    degraded: 'status-dot warning',
+    error: 'status-dot offline',
+  };
+  dot.className = dotClasses[data.scanner] || 'status-dot offline';
+  txt.textContent = data.scanner || 'unknown';
+
+  // Mode pill
+  pill.className   = `mode-pill ${isLite ? 'lite' : 'full'}`;
+  pill.textContent = isLite ? 'Lite' : 'Full';
+
+  // Calibration tier badge
+  if (data.calibration && data.calibration.tier) {
+    calib.textContent   = data.calibration.tier;
+    calib.style.display = 'inline';
+  } else {
+    calib.style.display = 'none';
+  }
+
+  // Latency
+  avg.textContent = `${(data.avg_scan_ms || 0).toFixed(1)}ms`;
+  p99.textContent = `${(data.p99_scan_ms || 0).toFixed(1)}ms`;
+
+  // Queue depth
+  if ((data.queue_depth || 0) > 0) {
+    queue.textContent   = `Queue depth: ${data.queue_depth} ⚠ Scanner backed up`;
+    queue.style.display = 'block';
+  } else {
+    queue.style.display = 'none';
+  }
+
+  // Entity set
+  if (isLite) {
+    elist.textContent = 'Engine: regex (no NLP)';
+  } else {
+    elist.textContent = (data.entity_set || []).join(' · ') || '—';
+  }
+}
+
+/* ─── Quota ──────────────────────────────────────────────────────────────── */
+function updateQuota(data) {
+  if (!data) return;
+
+  const normalView   = document.getElementById('quota-normal-view');
+  const selfHostView = document.getElementById('quota-self-hosted-view');
+  const warnIcon     = document.getElementById('quota-warning-icon');
+
+  if (data.self_hosted) {
+    normalView.style.display   = 'none';
+    selfHostView.style.display = 'block';
+    if (data.audit_path) {
+      document.getElementById('audit-path').textContent = data.audit_path;
+    }
+    return;
+  }
+
+  normalView.style.display   = 'block';
+  selfHostView.style.display = 'none';
+
+  const used  = data.used || 0;
+  const limit = data.limit || 1000;
+  const pct   = Math.min(100, Math.round((used / limit) * 100));
+
+  document.getElementById('quota-used').textContent   = used.toLocaleString();
+  document.getElementById('quota-of-label').style.display = 'inline';
+  document.getElementById('quota-limit').textContent  = limit.toLocaleString();
+  document.getElementById('quota-bar-container').style.display = 'block';
+  document.getElementById('quota-pct').style.display  = 'block';
+  document.getElementById('quota-pct').textContent    = `${pct}%`;
+
+  const fill = document.getElementById('quota-bar-fill');
+  fill.style.width = `${pct}%`;
+
+  const cta = document.getElementById('quota-cta');
+  const msg = document.getElementById('quota-msg');
+
+  if (pct >= 100) {
+    fill.className      = 'progress-bar-fill limit';
+    warnIcon.style.display = 'inline';
+    cta.style.display   = 'inline-block';
+    msg.textContent     = 'Limit reached. Upgrade now to continue protecting your agents.';
+  } else if (pct >= 95) {
+    fill.className      = 'progress-bar-fill limit';
+    warnIcon.style.display = 'inline';
+    cta.style.display   = 'inline-block';
+    msg.textContent     = 'Almost at limit. Upgrade to continue without interruption.';
+  } else if (pct >= 70) {
+    fill.className      = 'progress-bar-fill warn';
+    warnIcon.style.display = 'inline';
+    cta.style.display   = 'none';
+    msg.textContent     = "You're using this quickly. Plan accordingly.";
+  } else {
+    fill.className      = 'progress-bar-fill';
+    warnIcon.style.display = 'none';
+    cta.style.display   = 'none';
+    msg.textContent     = '';
+  }
+}
+
+/* ─── Events ─────────────────────────────────────────────────────────────── */
+function updateEvents(data) {
+  if (!data) return;
+
+  const events = data.events || [];
+  const badge  = document.getElementById('events-count-badge');
+  const list   = document.getElementById('events-list');
+
+  badge.textContent = `(${events.length} most recent)`;
+
+  // Aha moment check
+  checkAhaMoment(events);
+
+  if (events.length === 0) {
+    list.innerHTML = `
+      <div class="events-empty">
+        No blocks recorded yet.<br>
+        OnGarde is monitoring. Send some traffic.
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = events.map(e => renderEventRow(e)).join('');
+}
+
+function renderEventRow(e) {
+  const color   = riskColor(e.risk_level);
+  const label   = e.risk_level || e.action || '—';
+  const excerpt = (e.redacted_excerpt || '').substring(0, 80);
+  const rel     = relativeTime(e.timestamp);
+  const dir     = e.direction || '';
+  const isSuppressed = e.action === 'ALLOW_SUPPRESSED';
+
+  const badgeColor = isSuppressed ? 'var(--text-muted)' : color;
+  const badgeLabel = isSuppressed ? 'SUPPRESSED' : label;
+
+  // We JSON-encode event data and store it in a data attribute
+  const safeData = encodeURIComponent(JSON.stringify(e));
+
+  return `
+    <div class="event-row" onclick="openEventDrawer(decodeURIComponent('${safeData}'))">
+      <div class="event-badge" style="color:${badgeColor}">
+        <span class="badge-dot" style="background:${badgeColor}"></span>
+        ${escapeHtml(badgeLabel)}
+      </div>
+      <div class="event-main">
+        <div class="event-rule">${escapeHtml(e.rule_id || e.action || '—')}</div>
+        ${excerpt ? `<div class="event-excerpt">${escapeHtml(excerpt)}</div>` : ''}
+      </div>
+      <div class="event-right">
+        <div class="event-time">${rel}</div>
+        ${dir ? `<span class="direction-pill">${escapeHtml(dir)}</span>` : ''}
+        <span class="view-details">View details →</span>
+      </div>
+    </div>`;
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/* ─── Event Drawer ───────────────────────────────────────────────────────── */
+function openEventDrawer(dataStr) {
+  let e;
+  try {
+    e = typeof dataStr === 'string' ? JSON.parse(dataStr) : dataStr;
+  } catch(err) {
+    console.error('drawer parse error', err);
+    return;
+  }
+
+  const color = riskColor(e.risk_level);
+  const isSuppressed = e.action === 'ALLOW_SUPPRESSED';
+  const hasHint = e.suppression_hint && !isSuppressed;
+
+  document.getElementById('drawer-body').innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+      <span style="font-size:14px;font-weight:700;color:${riskColor(e.risk_level)}">
+        ■ ${escapeHtml(e.risk_level || e.action)}
+      </span>
+      <span style="font-family:'JetBrains Mono',monospace;font-weight:600;font-size:13px">
+        ${escapeHtml(e.rule_id || e.action)}
+      </span>
+    </div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:20px">
+      ${relativeTime(e.timestamp)} · ${escapeHtml(e.direction || '')} direction
+    </div>
+
+    <div class="drawer-section-title">What happened</div>
+    <div class="detail-row"><span class="detail-label">Rule</span>
+      <span class="detail-value">${escapeHtml(e.rule_id || '—')}</span></div>
+    <div class="detail-row"><span class="detail-label">Risk level</span>
+      <span class="detail-value" style="color:${color}">${escapeHtml(e.risk_level || '—')}</span></div>
+    <div class="detail-row"><span class="detail-label">scan_id</span>
+      <span class="detail-value">${escapeHtml(e.scan_id || '—')}</span></div>
+    <div class="detail-row"><span class="detail-label">Timestamp</span>
+      <span class="detail-value">${escapeHtml(e.timestamp || '—')}</span></div>
+    <div class="detail-row"><span class="detail-label">Direction</span>
+      <span class="detail-value">${escapeHtml(e.direction || '—')}</span></div>
+    ${e.test ? '<div class="detail-row"><span class="detail-label">Type</span><span class="detail-value" style="color:var(--brand-purple)">TEST event</span></div>' : ''}
+
+    ${e.redacted_excerpt ? `
+      <div style="margin-top:12px;font-size:12px;color:var(--text-muted);margin-bottom:6px">Excerpt (redacted):</div>
+      <div class="code-block">${escapeHtml(e.redacted_excerpt)}</div>
+    ` : ''}
+
+    ${hasHint ? `
+      <div class="drawer-section-title">Suppression hint</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:8px">
+        If this was a false positive, add to <code style="color:var(--text-accent)">.ongarde/config.yaml</code>:
+      </div>
+      <div class="code-block" id="hint-block">${escapeHtml(e.suppression_hint)}</div>
+      <button class="copy-btn" id="copy-hint-btn" onclick="copySuppHint()">
+        📋 Copy suppression hint
+      </button>
+      <div class="reload-hint">
+        Reload config with: <code>npx @ongarde/openclaw reload</code>
+      </div>
+    ` : (isSuppressed ? `
+      <div class="drawer-section-title">Suppression</div>
+      <div style="font-size:13px;color:var(--text-muted)">
+        This request matched an allowlist entry and was forwarded (ALLOW_SUPPRESSED).
+      </div>
+    ` : '')}
+  `;
+
+  document.getElementById('event-drawer').style.display = 'block';
+  document.getElementById('drawer-backdrop').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+
+  // Store hint for copy
+  STATE.currentHint = hasHint ? e.suppression_hint : null;
+}
+
+function closeDrawer() {
+  document.getElementById('event-drawer').style.display = 'none';
+  document.getElementById('drawer-backdrop').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function copySuppHint() {
+  if (!STATE.currentHint) return;
+  navigator.clipboard.writeText(STATE.currentHint).then(() => {
+    const btn = document.getElementById('copy-hint-btn');
+    if (btn) {
+      btn.textContent = '✓ Copied!';
+      btn.classList.add('success');
+      setTimeout(() => {
+        btn.innerHTML = '📋 Copy suppression hint';
+        btn.classList.remove('success');
+      }, 2000);
+    }
+  }).catch(err => console.error('clipboard error', err));
+}
+
+/* ─── Aha Moment ─────────────────────────────────────────────────────────── */
+function checkAhaMoment(events) {
+  const ahaCard = document.getElementById('aha-card');
+  const hasBlocks = events.some(e => e.action === 'BLOCK');
+  const alreadyShown = localStorage.getItem('aha_shown') === 'true';
+
+  ahaCard.style.display = (hasBlocks && !alreadyShown) ? 'block' : 'none';
+}
+
+function dismissAhaMoment() {
+  localStorage.setItem('aha_shown', 'true');
+  document.getElementById('aha-card').style.display = 'none';
+}
+
+/* ─── API Key Management ─────────────────────────────────────────────────── */
+async function loadKeyInfo() {
+  try {
+    const res = await fetch('/dashboard/api/keys');
+    if (!res.ok) {
+      // Auth may be required — show minimal UI
+      return;
+    }
+    const data = await res.json();
+    const keys = data.keys || [];
+    if (keys.length > 0) {
+      const k = keys[0];
+      STATE.keyId = k.id;
+
+      // Masked display
+      const last4 = (k.id || '').slice(-4) || '????';
+      document.getElementById('key-masked-display').textContent = 'ong-' + '•'.repeat(28);
+      document.getElementById('key-suffix').textContent = last4;
+
+      // Metadata
+      if (k.created_at) {
+        document.getElementById('key-created').textContent =
+          new Date(k.created_at).toLocaleDateString('en-US', {month:'long',day:'numeric',year:'numeric'});
+        document.getElementById('key-created-label').style.display = 'inline';
+      }
+      if (k.last_used_at) {
+        document.getElementById('key-last-used').textContent = relativeTime(k.last_used_at);
+        document.getElementById('key-last-used-label').style.display = 'inline';
+      }
+    }
+  } catch(e) {
+    console.warn('key info unavailable', e);
+  }
+}
+
+function showRotateConfirmation() {
+  document.getElementById('key-view-idle').style.display = 'none';
+  document.getElementById('key-confirm-dialog').style.display = 'block';
+  document.getElementById('key-new-display').style.display = 'none';
+}
+
+function cancelRotate() {
+  document.getElementById('key-view-idle').style.display = 'block';
+  document.getElementById('key-confirm-dialog').style.display = 'none';
+}
+
+async function confirmRotate() {
+  const btn = document.getElementById('btn-rotate-confirm');
+  btn.disabled = true;
+  btn.textContent = 'Rotating…';
+
+  try {
+    // Get current key ID if not known
+    if (!STATE.keyId) {
+      const keysRes = await fetch('/dashboard/api/keys');
+      if (keysRes.ok) {
+        const keysData = await keysRes.json();
+        STATE.keyId = (keysData.keys || [])[0]?.id;
+      }
+    }
+
+    const res = await fetch('/dashboard/api/keys/rotate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ key_id: STATE.keyId || '' }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      alert('Rotation failed: ' + (err.error || JSON.stringify(err)));
+      btn.disabled = false;
+      btn.textContent = 'Rotate — I understand';
+      return;
+    }
+
+    const data = await res.json();
+    STATE.newKeyPlaintext = data.new_key;
+
+    // Show the new key
+    document.getElementById('key-view-idle').style.display = 'none';
+    document.getElementById('key-confirm-dialog').style.display = 'none';
+    document.getElementById('key-new-display').style.display = 'block';
+    document.getElementById('new-key-value').textContent = data.new_key;
+
+    // Reload key info in background (for metadata)
+    STATE.keyId = null;
+    setTimeout(loadKeyInfo, 500);
+
+  } catch(err) {
+    alert('Rotation failed: ' + err.message);
+    btn.disabled = false;
+    btn.textContent = 'Rotate — I understand';
+  }
+}
+
+function copyNewKey() {
+  if (!STATE.newKeyPlaintext) return;
+  navigator.clipboard.writeText(STATE.newKeyPlaintext).then(() => {
+    const btn = document.getElementById('copy-new-key-btn');
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => { btn.textContent = '📋 Copy new key'; }, 2000);
+  });
+}
+
+function dismissNewKey() {
+  STATE.newKeyPlaintext = null;
+  document.getElementById('key-new-display').style.display = 'none';
+  document.getElementById('key-view-idle').style.display = 'block';
+  loadKeyInfo();
+}
+
+/* ─── Polling Engine ─────────────────────────────────────────────────────── */
+async function safeFetch(url) {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch(e) {
+    return null;
+  }
+}
+
+async function poll() {
+  // Poll all endpoints in parallel (E-009-S-005: include config-status for hot-reload toast)
+  const [statusData, countersData, scannerData, eventsData, quotaData, configStatusData] =
+    await Promise.all([
+      safeFetch('/dashboard/api/status'),
+      safeFetch('/dashboard/api/counters'),
+      safeFetch('/dashboard/api/health'),
+      safeFetch('/dashboard/api/events'),
+      safeFetch('/dashboard/api/quota'),
+      safeFetch('/dashboard/api/config-status'),
+    ]);
+
+  updateStatusCard(statusData);
+  updateCounters(countersData);
+  updateScannerHealth(scannerData);
+  updateEvents(eventsData);
+  updateQuota(quotaData);
+  checkConfigReload(configStatusData);
+
+  // Reset countdown
+  STATE.countdown = 10;
+}
+
+/* ─── Config Hot-Reload Toast — E-009-S-005 ─────────────────────────────── */
+function checkConfigReload(data) {
+  if (!data || !data.last_reload_at) return;
+  // Skip first poll (STATE.lastConfigReload is null) — don't toast on page load
+  if (STATE.lastConfigReload === null) {
+    STATE.lastConfigReload = data.last_reload_at;
+    return;
+  }
+  // Show toast when timestamp advances (new reload detected)
+  if (data.last_reload_at !== STATE.lastConfigReload) {
+    STATE.lastConfigReload = data.last_reload_at;
+    const count = data.allowlist_count !== undefined
+      ? ` (${data.allowlist_count} rule${data.allowlist_count !== 1 ? 's' : ''})`
+      : '';
+    showToast(`● Config reloaded — allowlist updated${count}`);
+  }
+}
+
+/* ─── Init ───────────────────────────────────────────────────────────────── */
+async function init() {
+  // Initial data load
+  await poll();
+  loadKeyInfo();
+
+  // Polling loop
+  STATE.pollTimer = setInterval(poll, 10000);
+
+  // Countdown display
+  startCountdown();
+}
+
+// Kick off
+init().catch(err => console.error('Dashboard init error:', err));
+</script>
+
+</body>
+</html>

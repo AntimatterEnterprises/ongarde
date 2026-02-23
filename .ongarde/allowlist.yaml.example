@@ -1,0 +1,53 @@
+# .ongarde/allowlist.yaml
+# OnGarde false positive / allowlist configuration — E-009
+#
+# Use this file to suppress known false positives without restarting the proxy.
+# Changes take effect within 1 second of saving (hot-reload via watchfiles).
+#
+# Place this file at: .ongarde/allowlist.yaml
+# (or use the `allowlist:` section in .ongarde/config.yaml)
+#
+# YAML structure: top-level "allowlist" key with a list of entries.
+# Each entry MUST have a rule_id. Other fields are optional.
+#
+# rule_id values (from scan rules):
+#   CREDENTIAL_DETECTED      — API keys, tokens (sk-*, ghp_*, etc.)
+#   PII_EMAIL_ADDRESS        — Email addresses detected by Presidio
+#   PII_PHONE_NUMBER         — Phone numbers detected by Presidio
+#   PII_US_SSN               — US Social Security Numbers
+#   PII_CREDIT_CARD          — Credit card numbers
+#   PROMPT_INJECTION_DETECTED — Prompt injection attempts
+#
+# Suppression via rule_id only (no pattern):
+#   Suppresses ALL blocks with this rule_id. Use cautiously.
+#
+# Suppression via rule_id + pattern:
+#   Suppresses ONLY if content matches the google-re2 pattern.
+#   More targeted — prefer this for production configs.
+
+version: 1
+allowlist:
+  # ── Example 1: Suppress specific pattern ──────────────────────────────────
+  # Suppress CREDENTIAL_DETECTED only when it matches a known CI test key pattern.
+  # The pattern is a google-re2 regex (not Python re).
+  - rule_id: CREDENTIAL_DETECTED
+    note: "CI/CD test API keys — not real credentials"
+    pattern: "sk-test-[a-zA-Z0-9]{20,}"
+
+  # ── Example 2: Suppress all blocks for a rule_id ──────────────────────────
+  # Use with caution — suppresses ALL blocks matching this rule.
+  # - rule_id: PII_EMAIL_ADDRESS
+  #   note: "Internal email-processing pipeline — emails are expected"
+
+  # ── Example 3: Specific Presidio false positive ───────────────────────────
+  # - rule_id: PII_PHONE_NUMBER
+  #   note: "Product catalog contains model numbers that look like phone numbers"
+  #   pattern: "Model-[0-9]{3}-[0-9]{4}"
+
+# ── How to find the rule_id for a false positive ────────────────────────────
+# 1. Check the dashboard at http://localhost:4242/dashboard
+# 2. Find the blocked event in "Recent Blocked Events"
+# 3. Click the event to open the detail drawer
+# 4. Copy the "suppression_hint" YAML — it contains the rule_id
+# 5. Paste the rule_id into this file, optionally add a pattern
+# 6. Save — changes apply within 1 second (no restart needed)

@@ -1,0 +1,43 @@
+# .ongarde/config.yaml
+# OnGarde configuration — version 1
+#
+# Copy this file to .ongarde/config.yaml and edit as needed.
+# OnGarde searches for config in this order:
+#   1. ONGARDE_CONFIG env var (if set)
+#   2. .ongarde/config.yaml (working directory — for development)
+#   3. ~/.ongarde/config.yaml (home directory — for production deployments)
+#
+# If no config file is found, all defaults are used (safe to run without config).
+
+version: 1  # REQUIRED — OnGarde will refuse to start if this is missing or wrong
+
+upstream:
+  openai: "https://api.openai.com"       # Base URL for OpenAI-compatible endpoints
+  anthropic: "https://api.anthropic.com" # Base URL for Anthropic Messages API
+  # custom: "http://localhost:11434"      # For Ollama or other local models
+
+proxy:
+  host: "127.0.0.1"  # SECURITY: Change to "0.0.0.0" only if needed (triggers a warning)
+  port: 4242         # Override with ONGARDE_PORT environment variable
+
+scanner:
+  mode: "full"  # "full" (Presidio NLP) or "lite" (regex only, lower RAM)
+  # entity_set:
+  #   - CREDIT_CARD
+  #   - CRYPTO
+  #   - EMAIL_ADDRESS
+  #   - PHONE_NUMBER
+  #   - US_SSN
+  # enable_person_detection: false  # PERSON detection is opt-in (high false-positive rate)
+  # presidio_sync_cap: 1000         # Characters threshold for synchronous Presidio path
+  # input_hard_cap: 8192            # Hard truncation cap before scanning
+  # presidio_timeout_ms: 40         # Presidio sync path timeout (milliseconds)
+
+audit:
+  retention_days: 90               # Audit event retention period
+  path: "~/.ongarde/audit.db"      # SQLite audit log path (~ is expanded)
+
+strict_mode: false  # v1 stub — NOT implemented; see docs/STREAMING_SECURITY_MODEL.md
+# Setting strict_mode: true logs a WARNING and is otherwise ignored in v1.
+# When implemented (v2+): buffers entire streaming response before forwarding
+# (absolute streaming security at the cost of streaming latency).

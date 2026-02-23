@@ -1,0 +1,30 @@
+{
+  "name": "@ongarde/openclaw",
+  "version": "1.0.0",
+  "description": "OnGarde CLI — Install, configure, and manage the OnGarde runtime content security proxy",
+  "main": "src/index.js",
+  "bin": {
+    "ongarde": "./bin/ongarde.js"
+  },
+  "scripts": {
+    "test": "jest --testPathPattern=tests/unit",
+    "test:integration": "jest --testPathPattern=tests/integration --testTimeout=360000",
+    "test:all": "jest --testTimeout=360000"
+  },
+  "keywords": [
+    "ongarde",
+    "ai-security",
+    "proxy",
+    "openclaw"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "cross-spawn": "^7.0.3"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
