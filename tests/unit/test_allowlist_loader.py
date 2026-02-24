@@ -15,14 +15,11 @@ Story: E-009-S-001
 from __future__ import annotations
 
 import os
-import tempfile
 from typing import Any
 
-import pytest
 import yaml
 
 from app.allowlist.loader import AllowlistEntry, AllowlistLoader, _parse_allowlist_raw
-
 
 # ─── AllowlistEntry tests ──────────────────────────────────────────────────────
 

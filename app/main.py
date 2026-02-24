@@ -38,17 +38,15 @@ from __future__ import annotations
 
 import asyncio
 import os
+import pathlib
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator
+from typing import AsyncGenerator
 
 import httpx
-import pathlib
-
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.routing import APIRouter
-
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -61,7 +59,8 @@ from app.config import Config, load_config
 from app.dashboard.api import router as dashboard_router
 from app.dashboard.middleware import DashboardLocalhostMiddleware
 from app.health import router as health_router
-from app.proxy.engine import create_http_client, router as engine_router, shutdown_proxy_engine
+from app.proxy.engine import create_http_client, shutdown_proxy_engine
+from app.proxy.engine import router as engine_router
 from app.proxy.middleware import BodySizeLimitMiddleware
 from app.scanner.calibration import CalibrationResult
 from app.scanner.pool import shutdown_scan_pool, startup_scan_pool

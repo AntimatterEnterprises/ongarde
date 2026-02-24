@@ -10,7 +10,6 @@ Tests:
 
 from __future__ import annotations
 
-import asyncio
 import json
 from typing import AsyncIterator
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -18,8 +17,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from app.proxy.engine import _extract_content_from_sse_message, _stream_response_scan
-from app.models.scan import Action
-
 
 # ─── Fixtures / Helpers ───────────────────────────────────────────────────────
 
@@ -147,11 +144,11 @@ class TestStreamResponseScanClean:
             make_done_chunk(),
         ]
         mock_response = MockStreamingResponse(chunks)
-        
+
         result_bytes = await collect_stream(
             _stream_response_scan(mock_response, SCAN_ID)
         )
-        
+
         assert len(result_bytes) > 0
         combined = b"".join(result_bytes).decode("utf-8")
         assert "DONE" in combined
@@ -161,7 +158,7 @@ class TestStreamResponseScanClean:
         """Streaming path uses aiter_bytes() — aread() must not be called (AC-E004-07)."""
         chunks = [make_openai_chunk("hello"), make_done_chunk()]
         mock_response = MockStreamingResponse(chunks)
-        
+
         # If aread() is called, MockStreamingResponse.aread() raises AssertionError
         result_bytes = await collect_stream(
             _stream_response_scan(mock_response, SCAN_ID)
@@ -174,7 +171,7 @@ class TestStreamResponseScanClean:
         """Empty stream (only [DONE]): no crash, returns empty/minimal bytes."""
         chunks = [make_done_chunk()]
         mock_response = MockStreamingResponse(chunks)
-        
+
         result_bytes = await collect_stream(
             _stream_response_scan(mock_response, SCAN_ID)
         )
@@ -190,11 +187,11 @@ class TestStreamResponseScanClean:
             "event: message_stop\ndata: {\"type\": \"message_stop\"}\n\n",
         ]
         mock_response = MockStreamingResponse(chunks)
-        
+
         result_bytes = await collect_stream(
             _stream_response_scan(mock_response, SCAN_ID)
         )
-        
+
         combined = b"".join(result_bytes).decode("utf-8")
         assert "Hello" in combined or "world" in combined
 
@@ -204,9 +201,9 @@ class TestStreamResponseScanClean:
         chunks = [make_openai_chunk(clean_text(50)), make_done_chunk()]
         mock_response = MockStreamingResponse(chunks)
         mock_backend = AsyncMock()
-        
+
         with patch("asyncio.create_task") as mock_create_task:
-            result_bytes = await collect_stream(
+            _result_bytes = await collect_stream(
                 _stream_response_scan(
                     mock_response, SCAN_ID,
                     audit_backend=mock_backend,
@@ -230,11 +227,11 @@ class TestStreamResponseScanBlock:
             make_openai_chunk(cred_content),
         ]
         mock_response = MockStreamingResponse(chunks)
-        
+
         result_bytes = await collect_stream(
             _stream_response_scan(mock_response, SCAN_ID)
         )
-        
+
         combined = b"".join(result_bytes).decode("utf-8")
         # Must contain the abort markers
         assert "[DONE]" in combined
@@ -245,15 +242,15 @@ class TestStreamResponseScanBlock:
         """On BLOCK: [DONE] is emitted before ongarde_block (AC-E004-03)."""
         cred_chunk = make_openai_chunk(CREDENTIAL + clean_text(500))
         mock_response = MockStreamingResponse([cred_chunk])
-        
+
         result_bytes = await collect_stream(
             _stream_response_scan(mock_response, SCAN_ID)
         )
-        
+
         combined = b"".join(result_bytes).decode("utf-8")
         done_pos = combined.find("[DONE]")
         block_pos = combined.find("ongarde_block")
-        
+
         assert done_pos != -1, "[DONE] not found in output"
         assert block_pos != -1, "ongarde_block not found in output"
         assert done_pos < block_pos, "[DONE] must appear before ongarde_block"
@@ -264,9 +261,9 @@ class TestStreamResponseScanBlock:
         cred_chunk = make_openai_chunk(CREDENTIAL + clean_text(500))
         mock_response = MockStreamingResponse([cred_chunk])
         mock_backend = AsyncMock()
-        
+
         with patch("asyncio.create_task") as mock_create_task:
-            result_bytes = await collect_stream(
+            _result_bytes = await collect_stream(
                 _stream_response_scan(
                     mock_response, SCAN_ID,
                     audit_backend=mock_backend,
@@ -281,7 +278,7 @@ class TestStreamResponseScanBlock:
         """audit_backend=None: no crash during BLOCK (graceful no-op)."""
         cred_chunk = make_openai_chunk(CREDENTIAL + clean_text(500))
         mock_response = MockStreamingResponse([cred_chunk])
-        
+
         # Should not raise
         result_bytes = await collect_stream(
             _stream_response_scan(mock_response, SCAN_ID, audit_backend=None)
@@ -292,7 +289,7 @@ class TestStreamResponseScanBlock:
     async def test_presidio_not_called_sync_in_streaming(self):
         """Presidio is NOT called synchronously during window scans (regex only)."""
         from app.scanner import presidio_worker as pw_module
-        
+
         clean_chunks = [
             make_openai_chunk(clean_text(200)),
             make_openai_chunk(clean_text(200)),
@@ -300,9 +297,9 @@ class TestStreamResponseScanBlock:
             make_done_chunk(),
         ]
         mock_response = MockStreamingResponse(clean_chunks)
-        
+
         with patch.object(pw_module, "presidio_scan_worker") as mock_presidio:
-            result_bytes = await collect_stream(
+            _result_bytes = await collect_stream(
                 _stream_response_scan(mock_response, SCAN_ID, scan_pool=None)
             )
             # With scan_pool=None, Presidio advisory is skipped entirely
@@ -318,16 +315,16 @@ class TestStreamingTrackerIntegration:
         """stream_opened() and stream_closed() called via tracker."""
         chunks = [make_openai_chunk("hello"), make_done_chunk()]
         mock_response = MockStreamingResponse(chunks)
-        
+
         mock_tracker = MagicMock()
-        
+
         await collect_stream(
             _stream_response_scan(
                 mock_response, SCAN_ID,
                 streaming_tracker=mock_tracker
             )
         )
-        
+
         mock_tracker.stream_opened.assert_called_once()
         mock_tracker.stream_closed.assert_called_once()
 
@@ -337,14 +334,14 @@ class TestStreamingTrackerIntegration:
         cred_chunk = make_openai_chunk(CREDENTIAL + clean_text(500))
         mock_response = MockStreamingResponse([cred_chunk])
         mock_tracker = MagicMock()
-        
+
         await collect_stream(
             _stream_response_scan(
                 mock_response, SCAN_ID,
                 streaming_tracker=mock_tracker
             )
         )
-        
+
         mock_tracker.stream_opened.assert_called_once()
         mock_tracker.stream_closed.assert_called_once()
 
@@ -353,7 +350,7 @@ class TestStreamingTrackerIntegration:
         """streaming_tracker=None: no crash."""
         chunks = [make_openai_chunk("hello"), make_done_chunk()]
         mock_response = MockStreamingResponse(chunks)
-        
+
         result = await collect_stream(
             _stream_response_scan(mock_response, SCAN_ID, streaming_tracker=None)
         )

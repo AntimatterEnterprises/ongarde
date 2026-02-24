@@ -14,15 +14,14 @@ Story: E-002-S-001
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+from typing import Any
+
 # google-re2 — NOT stdlib re. Aliased as re for readability.
 # PROHIBITED: import re   ← NEVER. Not here, not in any app/scanner/ file.
 import re2  # noqa: F401 — re2 alias intentional
 
-from dataclasses import dataclass
-from typing import Any
-
 from app.models.scan import RiskLevel
-
 
 # ---------------------------------------------------------------------------
 # PatternEntry dataclass

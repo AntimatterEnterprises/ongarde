@@ -22,7 +22,6 @@ from app.scanner.engine import (
     update_calibration,
 )
 
-
 # ─── Fixtures ─────────────────────────────────────────────────────────────────
 
 
@@ -382,8 +381,8 @@ class TestTimeoutEnforcement:
 
     def test_presidio_timeout_max_lte_scanner_global_timeout(self):
         """PRESIDIO_TIMEOUT_MAX_S ≤ SCANNER_GLOBAL_TIMEOUT_S (invariant)."""
-        from app.scanner.safe_scan import SCANNER_GLOBAL_TIMEOUT_S
         from app.constants import PRESIDIO_TIMEOUT_MAX_S
+        from app.scanner.safe_scan import SCANNER_GLOBAL_TIMEOUT_S
         assert PRESIDIO_TIMEOUT_MAX_S <= SCANNER_GLOBAL_TIMEOUT_S
 
     @pytest.mark.asyncio

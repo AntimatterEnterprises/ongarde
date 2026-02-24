@@ -14,14 +14,9 @@ Story: E-006-S-005
 
 from __future__ import annotations
 
-import asyncio
-from pathlib import Path
-from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
-from app.auth.limiter import KEY_MANAGEMENT_RATE_LIMIT, limiter
 from app.auth.keys import (
     InvalidKeyError,
     KeyLimitExceededError,
@@ -30,9 +25,9 @@ from app.auth.keys import (
     revoke_api_key,
     rotate_api_key_by_id,
 )
+from app.auth.limiter import KEY_MANAGEMENT_RATE_LIMIT, limiter
 from app.auth.middleware import authenticate_request
 from app.utils.logger import get_logger
-from app.utils.ulid import generate_ulid
 
 logger = get_logger(__name__)
 

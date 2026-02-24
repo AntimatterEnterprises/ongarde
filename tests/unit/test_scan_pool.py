@@ -12,7 +12,6 @@ from fastapi import HTTPException
 from app.scanner.calibration import CalibrationResult
 from app.scanner.pool import get_scan_pool, shutdown_scan_pool, startup_scan_pool
 
-
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
 

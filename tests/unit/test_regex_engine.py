@@ -12,10 +12,8 @@ AC coverage: AC-S002-01 through AC-S002-09
 
 from __future__ import annotations
 
-import asyncio
 import subprocess
 import time
-from typing import Optional
 
 import pytest
 
@@ -24,11 +22,8 @@ from app.scanner.regex_engine import (
     INPUT_HARD_CAP,
     RegexScanResult,
     apply_input_cap,
-    make_redacted_excerpt,
-    make_suppression_hint,
     regex_scan,
 )
-
 
 # ---------------------------------------------------------------------------
 # CI lint gate

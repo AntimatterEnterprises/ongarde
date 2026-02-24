@@ -11,11 +11,11 @@ Tests:
 
 from __future__ import annotations
 
+from unittest.mock import MagicMock
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock
 
 from app.utils.health import StreamingMetricsTracker
-
 
 # ─── StreamingMetricsTracker Unit Tests ──────────────────────────────────────
 
@@ -124,10 +124,11 @@ class TestHealthScannerStreamingFields:
     @pytest.mark.asyncio
     async def test_health_scanner_includes_streaming_active(self):
         """GET /health/scanner returns streaming_active field."""
+        from fastapi import FastAPI
         from fastapi.testclient import TestClient
+
         # We test the health router directly with a mock app state
         from app.health import router
-        from fastapi import FastAPI
 
         app = FastAPI()
         app.include_router(router)
@@ -148,7 +149,7 @@ class TestHealthScannerStreamingFields:
         resp = client.get("/health/scanner")
         assert resp.status_code == 200
         data = resp.json()
-        
+
         # Verify streaming fields present
         assert "streaming_active" in data
         assert data["streaming_active"] == 1
@@ -159,9 +160,10 @@ class TestHealthScannerStreamingFields:
     @pytest.mark.asyncio
     async def test_health_scanner_existing_fields_unchanged(self):
         """/health/scanner existing fields unchanged (backward-compatible)."""
-        from fastapi.testclient import TestClient
-        from app.health import router
         from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+
+        from app.health import router
 
         app = FastAPI()
         app.include_router(router)
@@ -177,7 +179,7 @@ class TestHealthScannerStreamingFields:
         resp = client.get("/health/scanner")
         assert resp.status_code == 200
         data = resp.json()
-        
+
         # Verify existing fields still present
         required_existing = [
             "scanner", "scanner_mode", "entity_set",
@@ -190,9 +192,10 @@ class TestHealthScannerStreamingFields:
     @pytest.mark.asyncio
     async def test_health_scanner_no_tracker_returns_zeros(self):
         """/health/scanner without streaming_tracker returns zeros for streaming fields."""
-        from fastapi.testclient import TestClient
-        from app.health import router
         from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+
+        from app.health import router
 
         app = FastAPI()
         app.include_router(router)
@@ -208,7 +211,7 @@ class TestHealthScannerStreamingFields:
         resp = client.get("/health/scanner")
         assert resp.status_code == 200
         data = resp.json()
-        
+
         assert data["streaming_active"] == 0
         assert data["window_scan_avg_ms"] == 0.0
         assert data["window_scan_p99_ms"] == 0.0

@@ -93,8 +93,8 @@ def test_all_patterns_compiled_at_module_load() -> None:
 
 def test_no_bare_import_re_in_scanner_modules() -> None:
     """CI lint gate: no bare 'import re' in any app/scanner/ file (AC-E002-08)."""
-    import subprocess
     import pathlib
+    import subprocess
 
     project_root = pathlib.Path(__file__).parent.parent.parent
     result = subprocess.run(
@@ -110,8 +110,8 @@ def test_no_bare_import_re_in_scanner_modules() -> None:
 
 def test_no_scan_request_imported_outside_safe_scan() -> None:
     """scan_request must only be called from safe_scan.py (AC-S006-06)."""
-    import subprocess
     import pathlib
+    import subprocess
 
     project_root = pathlib.Path(__file__).parent.parent.parent
     # Check that scan_request is not imported from outside safe_scan.py
@@ -128,7 +128,7 @@ def test_no_scan_request_imported_outside_safe_scan() -> None:
             if "safe_scan.py" not in line
         ]
         assert not illegal_imports, (
-            f"scan_request imported outside safe_scan.py:\n" + "\n".join(illegal_imports)
+            "scan_request imported outside safe_scan.py:\n" + "\n".join(illegal_imports)
         )
 
 

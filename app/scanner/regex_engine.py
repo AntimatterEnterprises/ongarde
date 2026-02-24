@@ -21,8 +21,6 @@ import logging
 from dataclasses import dataclass
 from typing import Optional
 
-import re2  # google-re2 — NOT stdlib re
-
 from app.models.scan import RiskLevel
 from app.scanner.definitions import (
     CREDENTIAL_PATTERNS,

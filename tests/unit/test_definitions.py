@@ -15,23 +15,20 @@ AC coverage: AC-S001-01 through AC-S001-08
 from __future__ import annotations
 
 import subprocess
-import sys
 import time
 
 import pytest
 import re2
 
+from app.models.scan import RiskLevel
 from app.scanner.definitions import (
     ALL_PATTERNS,
     CREDENTIAL_PATTERNS,
     DANGEROUS_COMMAND_PATTERNS,
-    PatternEntry,
     PII_FAST_PATH_PATTERNS,
     PROMPT_INJECTION_PATTERNS,
     TEST_CREDENTIAL_PATTERN,
 )
-from app.models.scan import RiskLevel
-
 
 # ---------------------------------------------------------------------------
 # AC-S001-01: No bare import re

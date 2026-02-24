@@ -10,10 +10,7 @@ AC coverage:
 
 from __future__ import annotations
 
-import pytest
-
 from app.models.scan import Action, RiskLevel, ScanResult
-
 
 # ─── Action Enum ──────────────────────────────────────────────────────────────
 

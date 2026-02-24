@@ -17,11 +17,8 @@ from __future__ import annotations
 
 import json
 
-import pytest
-
 from app.models.block import build_block_response, build_upstream_unavailable_response
 from app.models.scan import Action, RiskLevel, ScanResult
-
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 

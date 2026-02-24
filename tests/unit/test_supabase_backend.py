@@ -13,22 +13,18 @@ Key non-negotiables tested:
 from __future__ import annotations
 
 import asyncio
-import unittest.mock as mock
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
-
-import pytest
+from unittest.mock import AsyncMock, MagicMock
 
 from app.audit.models import AuditEvent
 from app.audit.protocol import AuditBackend, EventFilters
 from app.audit.supabase_backend import (
+    _SUPABASE_TIMEOUT_S,
     SupabaseBackend,
     _dict_to_event,
     _event_to_dict,
-    _SUPABASE_TIMEOUT_S,
 )
-
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 

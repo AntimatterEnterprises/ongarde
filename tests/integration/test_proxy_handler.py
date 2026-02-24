@@ -17,9 +17,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-import statistics
 import time
-from collections import defaultdict
 from typing import Any
 from unittest.mock import patch
 
@@ -36,7 +34,6 @@ from app.proxy.engine import (
     _route_upstream,
     create_http_client,
 )
-
 
 # ─── Fixtures & Helpers ───────────────────────────────────────────────────────
 
@@ -884,7 +881,6 @@ class TestConcurrentPerformance:
         capacity — not Presidio throughput (which is environment-dependent
         and covered by benchmarks/bench_proxy.py).
         """
-        from unittest.mock import patch, AsyncMock
         from app.models.scan import Action, ScanResult
 
         _patch_load_config(monkeypatch)

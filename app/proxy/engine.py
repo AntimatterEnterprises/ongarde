@@ -48,17 +48,16 @@ import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import StreamingResponse
 
+from app.auth.middleware import authenticate_request
 from app.config import Config
 from app.constants import MAX_RESPONSE_BUFFER_BYTES
 from app.models.block import build_block_response, build_upstream_unavailable_response
 from app.models.scan import Action, RiskLevel, ScanResult
 from app.proxy.headers import (
-    HOP_BY_HOP_HEADERS,  # re-exported for backward compatibility with tests
     build_agent_response_headers,
     build_upstream_headers,
 )
 from app.proxy.streaming import emit_stream_abort
-from app.auth.middleware import authenticate_request
 from app.scanner.safe_scan import scan_or_block
 from app.scanner.streaming_scanner import StreamingScanner
 from app.utils.logger import get_logger

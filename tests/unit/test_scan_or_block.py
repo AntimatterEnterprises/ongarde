@@ -23,7 +23,6 @@ import yaml
 from app.models.scan import Action, RiskLevel, ScanResult
 from app.scanner.safe_scan import SCANNER_GLOBAL_TIMEOUT_S, scan_or_block
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

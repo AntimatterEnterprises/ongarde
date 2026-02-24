@@ -14,20 +14,17 @@ Story: E-009-S-001, E-009-S-002, E-009-S-003, E-009-S-004, E-009-S-005
 
 from __future__ import annotations
 
-import asyncio
 from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock
 
-import pytest
 from fastapi.testclient import TestClient
 
 from app.allowlist.loader import AllowlistEntry, AllowlistLoader
 from app.allowlist.matcher import apply_allowlist
 from app.audit.models import AuditEvent
-from app.audit.protocol import EventFilters, NullAuditBackend
-from app.dashboard.api import notify_config_reloaded, _config_status
+from app.audit.protocol import NullAuditBackend
+from app.dashboard.api import notify_config_reloaded
 from app.models.scan import Action, RiskLevel, ScanResult
-
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 

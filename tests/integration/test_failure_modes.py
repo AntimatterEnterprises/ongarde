@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import json
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import httpx
 import pytest
@@ -28,7 +28,6 @@ from starlette.testclient import TestClient
 from app.config import Config
 from app.main import create_app
 from app.models.scan import Action, RiskLevel, ScanResult
-
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 

@@ -16,29 +16,24 @@ Story: HOLD-002 fix — Adaptive Performance Protocol
 
 from __future__ import annotations
 
-import asyncio
 from concurrent.futures import ProcessPoolExecutor
-from typing import Optional
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
+from app.constants import (
+    DEFAULT_PRESIDIO_SYNC_CAP,
+    PRESIDIO_CALIBRATION_SIZES,
+    PRESIDIO_TIMEOUT_FALLBACK_S,
+    PRESIDIO_TIMEOUT_MAX_S,
+    PRESIDIO_TIMEOUT_MIN_S,
+)
 from app.scanner.calibration import (
     CalibrationResult,
     _make_calibration_text,
     derive_thresholds,
     run_calibration,
 )
-from app.constants import (
-    DEFAULT_PRESIDIO_SYNC_CAP,
-    PRESIDIO_CALIBRATION_ITERATIONS,
-    PRESIDIO_CALIBRATION_SIZES,
-    PRESIDIO_TARGET_LATENCY_MS,
-    PRESIDIO_TIMEOUT_FALLBACK_S,
-    PRESIDIO_TIMEOUT_MAX_S,
-    PRESIDIO_TIMEOUT_MIN_S,
-)
-
 
 # ─── CalibrationResult ────────────────────────────────────────────────────────
 

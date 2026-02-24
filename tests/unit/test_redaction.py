@@ -14,17 +14,15 @@ AC coverage: AC-E002-05, AC-E002-06, AC-E002-07, AC-S005-01 through AC-S005-06
 from __future__ import annotations
 
 import yaml
-import pytest
 
-from app.models.scan import Action, RiskLevel, ScanResult
 from app.models.block import build_block_response
+from app.models.scan import Action, RiskLevel, ScanResult
 from app.scanner.regex_engine import (
     RegexScanResult,
     make_redacted_excerpt,
     make_suppression_hint,
     regex_scan,
 )
-
 
 # ===========================================================================
 # AC-S005-01 / AC-S005-02: make_redacted_excerpt()
@@ -447,7 +445,6 @@ class TestBlockResponseIntegration:
             "AIza" + "e" * 35,
         ]
 
-        import json
         for cred_text in credential_texts:
             regex_result = regex_scan(cred_text)
             assert regex_result.is_block is True

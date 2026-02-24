@@ -27,12 +27,10 @@ import os
 from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock
 
-import pytest
 from fastapi.testclient import TestClient
 
 from app.audit.models import AuditEvent
 from app.audit.protocol import NullAuditBackend
-
 
 # ─── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -78,8 +76,8 @@ def _configured_client(
     Uses TestClient WITHOUT the context manager to skip the ASGI lifespan.
     All required app.state fields are set manually.
     """
-    from app.main import create_app
     from app.config import Config
+    from app.main import create_app
 
     app = create_app()
 
@@ -475,8 +473,8 @@ class TestEventsEndpoint:
 
     def test_events_single_block_event_has_all_fields(self):
         event = _make_event()
-        from app.main import create_app
         from app.config import Config
+        from app.main import create_app
         app = create_app()
         app.state.ready = True
         app.state.config = Config.defaults()
@@ -497,8 +495,8 @@ class TestEventsEndpoint:
 
     def test_events_suppression_hint_for_policy_block(self):
         event = _make_event(rule_id="CREDENTIAL_DETECTED")
-        from app.main import create_app
         from app.config import Config
+        from app.main import create_app
         app = create_app()
         app.state.ready = True
         app.state.config = Config.defaults()
@@ -517,8 +515,8 @@ class TestEventsEndpoint:
 
     def test_events_suppression_hint_null_for_scanner_error(self):
         event = _make_event(rule_id="SCANNER_ERROR")
-        from app.main import create_app
         from app.config import Config
+        from app.main import create_app
         app = create_app()
         app.state.ready = True
         app.state.config = Config.defaults()
@@ -535,8 +533,8 @@ class TestEventsEndpoint:
 
     def test_events_suppression_hint_null_for_quota_exceeded(self):
         event = _make_event(rule_id="QUOTA_EXCEEDED")
-        from app.main import create_app
         from app.config import Config
+        from app.main import create_app
         app = create_app()
         app.state.ready = True
         app.state.config = Config.defaults()
@@ -553,8 +551,8 @@ class TestEventsEndpoint:
     def test_events_redacted_excerpt_capped_at_100_chars(self):
         long_excerpt = "A" * 200
         event = _make_event(redacted_excerpt=long_excerpt)
-        from app.main import create_app
         from app.config import Config
+        from app.main import create_app
         app = create_app()
         app.state.ready = True
         app.state.config = Config.defaults()
@@ -570,8 +568,8 @@ class TestEventsEndpoint:
 
     def test_events_limit_caps_at_50(self):
         """limit=999 query param is capped at 50 in the backend call."""
-        from app.main import create_app
         from app.config import Config
+        from app.main import create_app
         app = create_app()
         app.state.ready = True
         app.state.config = Config.defaults()
@@ -588,8 +586,8 @@ class TestEventsEndpoint:
 
     def test_events_include_suppressed_action_filter(self):
         """include_suppressed=true uses action_in=['BLOCK', 'ALLOW_SUPPRESSED']."""
-        from app.main import create_app
         from app.config import Config
+        from app.main import create_app
         app = create_app()
         app.state.ready = True
         app.state.config = Config.defaults()
@@ -649,8 +647,8 @@ class TestQuotaEndpoint:
 
     def test_quota_self_hosted_has_used_count(self):
         """Self-hosted response includes used count from count_events."""
-        from app.main import create_app
         from app.config import Config
+        from app.main import create_app
         os.environ.pop("SUPABASE_URL", None)
         app = create_app()
         app.state.ready = True

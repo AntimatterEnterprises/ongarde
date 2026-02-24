@@ -33,7 +33,7 @@ logger = get_logger(__name__)
 # Try to import the supabase library — it's an optional dependency.
 # If unavailable, SupabaseBackend becomes a no-op backend that logs warnings.
 try:
-    from supabase import AsyncClient, create_async_client  # type: ignore[import-untyped]
+    from supabase import create_async_client  # type: ignore[import-untyped]
     _SUPABASE_AVAILABLE = True
 except ImportError:
     _SUPABASE_AVAILABLE = False
@@ -299,7 +299,6 @@ def _event_to_dict(event: AuditEvent) -> dict[str, Any]:
     bool → bool (Postgres understands Python bool)
     list → list (JSON column in Supabase)
     """
-    import json as _json
 
     advisory = event.advisory_presidio_entities
     return {

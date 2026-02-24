@@ -30,7 +30,6 @@ from app.audit.protocol import AuditBackend
 from app.audit.sqlite_backend import LocalSQLiteBackend
 from app.audit.supabase_backend import SupabaseBackend
 
-
 # ─── Backend Selection ────────────────────────────────────────────────────────
 
 

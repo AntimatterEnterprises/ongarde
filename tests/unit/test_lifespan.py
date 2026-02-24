@@ -8,20 +8,16 @@ Covers all ACs defined in the story:
 
 from __future__ import annotations
 
-import os
-import tempfile
 from typing import Any
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock
 
 import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from starlette.testclient import TestClient
 
-from app.audit.protocol import NullAuditBackend
 from app.config import Config, load_config
 from app.main import create_app, lifespan
-
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -248,8 +244,8 @@ class TestLifespanStartupSequence:
     ) -> None:
         """AC-6 Step 3: scan pool is stored in app.state.scan_pool (E-003: real pool or None on failure)."""
         from concurrent.futures import ProcessPoolExecutor
+
         from app.scanner.calibration import CalibrationResult
-        from unittest.mock import AsyncMock
         _patch_load_config(monkeypatch)
         # Mock startup_scan_pool to avoid spawning real processes in unit tests
         monkeypatch.setattr(
@@ -403,6 +399,7 @@ class TestHealthEndpointIntegration:
 
         # Pre-startup: should be 503 (via async client, no lifespan)
         import asyncio
+
         from httpx import ASGITransport, AsyncClient
 
         async def check_503() -> int:

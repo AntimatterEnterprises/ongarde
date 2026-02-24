@@ -47,7 +47,6 @@ from app.audit.models import AuditEvent
 from app.audit.protocol import AuditBackend, EventFilters
 from app.audit.sqlite_backend import LocalSQLiteBackend
 
-
 # ─── Fixtures ─────────────────────────────────────────────────────────────────
 
 
@@ -87,7 +86,6 @@ async def audit_backend(request: pytest.FixtureRequest, tmp_path: object) -> Asy
 
     else:  # sqlite
         assert isinstance(tmp_path, type(tmp_path))
-        import tempfile
         import os as _os
         db_path = _os.path.join(str(tmp_path), "integration_test.db")
         backend = LocalSQLiteBackend(db_path=db_path)

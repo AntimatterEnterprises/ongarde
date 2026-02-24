@@ -10,13 +10,9 @@ Tests:
 
 from __future__ import annotations
 
-import logging
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
-import pytest
-
-from app.config import Config, ScannerConfig
-
+from app.config import Config
 
 # ─── Test: strict_mode field on Config ───────────────────────────────────────
 
@@ -88,8 +84,6 @@ class TestStrictModeWarning:
 
     def test_strict_mode_warning_message_exact(self):
         """The WARNING message is exactly 'strict_mode is not implemented in v1 — ignored'."""
-        from app.config import load_config
-        import io
 
         # Check the exact message by looking at what load_config logs
         config_dict = {"version": 1, "strict_mode": True}

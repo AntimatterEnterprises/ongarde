@@ -8,13 +8,9 @@ Tests:
 
 from __future__ import annotations
 
-import json
-from unittest.mock import AsyncMock, MagicMock, patch
-
 import pytest
 
-from app.models.scan import Action, RiskLevel, ScanResult
-
+from app.models.scan import Action
 
 CREDENTIAL = "sk-testABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmn"
 
@@ -31,13 +27,10 @@ class TestNonStreamingResponseScan:
     @pytest.mark.asyncio
     async def test_clean_response_body_forwarded(self):
         """Clean non-streaming response body forwarded unchanged."""
-        from fastapi import FastAPI
-        from fastapi.testclient import TestClient
-        from app.proxy.engine import router as proxy_router
 
         # We'll test via the scan_or_block integration
-        from app.scanner.safe_scan import scan_or_block
         from app.models.scan import Action
+        from app.scanner.safe_scan import scan_or_block
 
         result = await scan_or_block(
             content=clean_text(200),
@@ -50,8 +43,8 @@ class TestNonStreamingResponseScan:
     @pytest.mark.asyncio
     async def test_credential_in_response_body_blocked(self):
         """Non-streaming response body with credential triggers BLOCK (AC-E004-06)."""
-        from app.scanner.safe_scan import scan_or_block
         from app.models.scan import Action
+        from app.scanner.safe_scan import scan_or_block
 
         result = await scan_or_block(
             content=CREDENTIAL + " " + clean_text(200),

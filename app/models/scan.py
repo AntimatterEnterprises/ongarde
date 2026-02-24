@@ -17,7 +17,7 @@ Stories: E-001-S-006 (models defined), E-002 (regex scanner fulfils contract),
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
 

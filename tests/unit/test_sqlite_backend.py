@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import asyncio
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import Any
 
 import aiosqlite
@@ -20,7 +20,6 @@ import pytest
 from app.audit.models import AuditEvent
 from app.audit.protocol import AuditBackend, EventFilters
 from app.audit.sqlite_backend import LocalSQLiteBackend, run_retention_pruner
-
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -834,7 +833,7 @@ class TestRetentionPruner:
         await backend.initialize()
 
         call_count = 0
-        original_prune = backend.prune_old_events
+        _original_prune = backend.prune_old_events
 
         async def failing_prune(retention_days: int = 90) -> int:
             nonlocal call_count

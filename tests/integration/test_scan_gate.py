@@ -24,7 +24,6 @@ from starlette.testclient import TestClient
 from app.config import Config
 from app.main import create_app
 
-
 # ---------------------------------------------------------------------------
 # Helpers (follow the pattern from test_failure_modes.py)
 # ---------------------------------------------------------------------------

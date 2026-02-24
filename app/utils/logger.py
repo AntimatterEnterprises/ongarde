@@ -7,8 +7,8 @@ All logs include request_id for tracing and performance metrics.
 import logging
 import sys
 import time
-from typing import Any, Dict, Optional
 from contextvars import ContextVar
+from typing import Any, Optional
 
 import structlog
 from structlog.types import EventDict, Processor
@@ -36,7 +36,7 @@ def configure_logging(
     json_output: bool = True
 ) -> None:
     """Configure structured logging for the application.
-    
+
     Args:
         log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
         json_output: If True, output JSON format. If False, use console format.
@@ -49,7 +49,7 @@ def configure_logging(
         structlog.processors.StackInfoRenderer(),
         structlog.processors.format_exc_info,
     ]
-    
+
     if json_output:
         # JSON output for production (Railway)
         processors.append(structlog.processors.JSONRenderer())
@@ -58,7 +58,7 @@ def configure_logging(
         processors.extend([
             structlog.dev.ConsoleRenderer(colors=True),
         ])
-    
+
     structlog.configure(
         processors=processors,
         wrapper_class=structlog.make_filtering_bound_logger(
@@ -72,10 +72,10 @@ def configure_logging(
 
 def get_logger(name: str = "ongarde") -> structlog.stdlib.BoundLogger:
     """Get a configured logger instance.
-    
+
     Args:
         name: Logger name (typically module name)
-        
+
     Returns:
         Configured structlog logger
     """
@@ -84,10 +84,10 @@ def get_logger(name: str = "ongarde") -> structlog.stdlib.BoundLogger:
 
 class PerformanceLogger:
     """Context manager for tracking operation performance."""
-    
+
     def __init__(self, operation: str, logger: Optional[structlog.stdlib.BoundLogger] = None):
         """Initialize performance logger.
-        
+
         Args:
             operation: Name of the operation being timed
             logger: Logger instance to use (creates new if None)
@@ -96,17 +96,17 @@ class PerformanceLogger:
         self.logger = logger or get_logger()
         self.start_time: float = 0
         self.end_time: float = 0
-    
+
     def __enter__(self) -> "PerformanceLogger":
         """Start timing."""
         self.start_time = time.perf_counter()
         return self
-    
+
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Stop timing and log performance."""
         self.end_time = time.perf_counter()
         duration_ms = (self.end_time - self.start_time) * 1000
-        
+
         if exc_type is not None:
             self.logger.error(
                 f"{self.operation} failed",
@@ -122,7 +122,7 @@ class PerformanceLogger:
                 operation=self.operation,
                 duration_ms=duration_ms,
             )
-    
+
     @property
     def duration_ms(self) -> float:
         """Get duration in milliseconds."""
@@ -133,7 +133,7 @@ class PerformanceLogger:
 
 def set_request_id(request_id: str) -> None:
     """Set request ID in context for all subsequent logs.
-    
+
     Args:
         request_id: Unique identifier for the request
     """

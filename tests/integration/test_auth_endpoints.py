@@ -9,14 +9,13 @@ import os
 from pathlib import Path
 
 import pytest
+from fastapi import FastAPI, Request
 from httpx import ASGITransport, AsyncClient
 
-from app.auth.keys import clear_key_cache, create_api_key, init_key_store
 from app.audit.protocol import NullAuditBackend
+from app.auth.keys import clear_key_cache, create_api_key, init_key_store
 from app.auth.middleware import authenticate_request
 from app.auth.router import router as auth_router
-from fastapi import FastAPI, Request
-
 
 pytestmark = pytest.mark.asyncio
 

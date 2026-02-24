@@ -24,7 +24,6 @@ from app.scanner.definitions import (
 )
 from app.scanner.regex_engine import regex_scan
 
-
 # ===========================================================================
 # DANGEROUS COMMAND POSITIVES — block rate MUST be 100% (AC-E002-02)
 # ===========================================================================

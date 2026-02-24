@@ -9,15 +9,14 @@ Tests verify:
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from app.auth.keys import clear_key_cache, create_api_key, init_key_store
 from app.audit.protocol import NullAuditBackend
+from app.auth.keys import clear_key_cache, create_api_key, init_key_store
 from app.main import create_app
-
 
 pytestmark = pytest.mark.asyncio
 
@@ -42,6 +41,7 @@ async def app_with_keys(tmp_path: Path):
 
     # Fast-track startup: set state directly without running lifespan
     import httpx
+
     from app.config import load_config
     from app.utils.health import ScanLatencyTracker
 
@@ -135,7 +135,6 @@ class TestAuthBeforeScan:
 
         # Mock both scan AND upstream so we don't need a real LLM
         import httpx
-        from fastapi.responses import JSONResponse
 
         async def mock_upstream(request, **kwargs):
             return httpx.Response(

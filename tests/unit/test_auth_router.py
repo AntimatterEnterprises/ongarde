@@ -12,17 +12,15 @@ Verifies:
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi import FastAPI, Request
-from fastapi.testclient import TestClient
 from httpx import ASGITransport, AsyncClient
 
-from app.auth.keys import clear_key_cache, create_api_key, init_key_store, validate_api_key
-from app.auth.router import router as auth_router
 from app.audit.protocol import NullAuditBackend
-
+from app.auth.keys import clear_key_cache, create_api_key
+from app.auth.router import router as auth_router
 
 pytestmark = pytest.mark.asyncio
 
@@ -47,6 +45,7 @@ def make_test_app(user_id: str = "user1") -> FastAPI:
 def make_unauth_app() -> FastAPI:
     """App where authenticate_request always raises 401."""
     from fastapi import HTTPException
+
     from app.auth.middleware import authenticate_request
 
     app = FastAPI()

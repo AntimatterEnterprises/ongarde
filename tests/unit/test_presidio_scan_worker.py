@@ -6,12 +6,11 @@ All tests use mocked _analyzer to avoid requiring real models.
 from __future__ import annotations
 
 import json
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
 import app.scanner.presidio_worker as pw
-
 
 # ─── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -101,7 +100,6 @@ class TestPresidioScanWorker:
         """score field is a Python float (not numpy.float32 or similar)."""
         mock_result = _make_mock_result("US_SSN", 0, 11, 0.92)
         # Simulate numpy float
-        import ctypes
         mock_result.score = 0.92  # plain float is fine too
         pw._analyzer.analyze.return_value = [mock_result]
         result = pw.presidio_scan_worker("123-45-6789")

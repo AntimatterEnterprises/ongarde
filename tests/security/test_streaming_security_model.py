@@ -103,7 +103,7 @@ class TestStreamingLimitationDocumented:
         if not readme_path.exists():
             pytest.skip("README.md not found")
         content = readme_path.read_text(encoding="utf-8").lower()
-        
+
         # Forbidden phrases that would constitute false absolute-guarantee claims
         forbidden_phrases = [
             "zero malicious tokens",

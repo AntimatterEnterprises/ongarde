@@ -13,8 +13,6 @@ import re
 import threading
 import time
 
-import pytest
-
 from app.utils.ulid import generate_ulid
 
 # ─── ULID format constants ─────────────────────────────────────────────────────

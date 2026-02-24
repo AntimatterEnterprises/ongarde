@@ -17,9 +17,8 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from fastapi import HTTPException
 
-from app.auth.keys import clear_key_cache, create_api_key
+from app.auth.keys import clear_key_cache
 from app.auth.middleware import _extract_ong_bearer, authenticate_request
-
 
 pytestmark = pytest.mark.asyncio
 
@@ -27,7 +26,7 @@ pytestmark = pytest.mark.asyncio
 @pytest.fixture(autouse=True)
 def require_auth(monkeypatch: pytest.MonkeyPatch):
     """Set ONGARDE_AUTH_REQUIRED=true for all tests in this module.
-    
+
     The middleware tests specifically test the enforcement of auth,
     so we always run in strict mode here.
     """

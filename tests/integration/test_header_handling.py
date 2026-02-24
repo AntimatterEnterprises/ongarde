@@ -17,11 +17,9 @@ from __future__ import annotations
 
 import re
 from typing import Any
-from unittest.mock import patch
 
 import httpx
 import pytest
-from httpx import ASGITransport, AsyncClient
 from starlette.testclient import TestClient
 
 from app.config import Config
@@ -95,7 +93,7 @@ class _ProxyTestContext:
         app = create_app()
 
         # Wire mock transport into lifespan via patching
-        original_create = None
+        _original_create = None
 
         def patched_create_http_client() -> httpx.AsyncClient:
             return http_client
@@ -476,12 +474,11 @@ class TestReadyGate:
         # Set ready=False before the lifespan runs (simulates mid-startup access)
         app.state.ready = False
 
-        with TestClient(app, raise_server_exceptions=False) as client:
+        with TestClient(app, raise_server_exceptions=False):
             # Bypassing the lifespan means ready stays False
             pass
 
         # Directly test the dependency: create a client without lifespan
-        import httpx
         from starlette.testclient import TestClient as TC
 
         # Create app without running lifespan (ready=False)

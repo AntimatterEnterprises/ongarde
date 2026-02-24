@@ -18,11 +18,7 @@ AC coverage:
 
 from __future__ import annotations
 
-import time
-from typing import Optional
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import patch
 
 from app.models.scan import Action, RiskLevel, ScanResult
 from app.scanner.streaming_scanner import (
@@ -30,7 +26,6 @@ from app.scanner.streaming_scanner import (
     WINDOW_SIZE,
     StreamingScanner,
 )
-
 
 # ─── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -110,7 +105,7 @@ class TestWindowAccumulation:
 
     def test_flush_after_full_window_scans_remainder(self):
         """flush() after a full window handles the remainder correctly.
-        
+
         add_content() scans the entire window_buffer when len >= WINDOW_SIZE, then
         resets window_buffer to "". Then add more content and flush() scans the remainder.
         """
@@ -119,11 +114,11 @@ class TestWindowAccumulation:
         scanner.add_content(clean_text(WINDOW_SIZE))
         assert scanner.window_count == 1
         assert scanner.window_buffer == ""
-        
+
         # Add 50 more chars → below WINDOW_SIZE, no scan triggered
         scanner.add_content(clean_text(50))
         assert scanner.window_count == 1  # No new scan
-        
+
         # flush() scans the 50-char remainder
         result = scanner.flush()
         assert result is None
@@ -291,36 +286,36 @@ class TestOverlapBuffer:
         # Build a credential that spans the window boundary
         # Window boundary at WINDOW_SIZE chars
         # Credential split: first 32 chars in window 1, last 32 chars in window 2
-        before_boundary = clean_text(WINDOW_SIZE - 32)  # 480 clean chars
+        _before_boundary = clean_text(WINDOW_SIZE - 32)  # 480 clean chars
         cred_first_half = "sk-test1234567"        # 14 chars, first half
         cred_second_half = "8901234567890abcde"   # 18 chars, second half
         # Full credential: "sk-test12345678901234567890abcde" (32 chars)
         # Position: starts 14 chars before window boundary
-        
+
         # Build window 1 content: (WINDOW_SIZE - len(cred_first_half)) clean chars + cred_first_half
         window1_pre = clean_text(WINDOW_SIZE - len(cred_first_half))
         window1 = window1_pre + cred_first_half  # exactly WINDOW_SIZE chars
-        
+
         # Window 2 content: cred_second_half + clean text
         window2 = cred_second_half + clean_text(WINDOW_SIZE - len(cred_second_half))
-        
+
         scanner = make_scanner()
-        
+
         # Add window 1 — should pass (partial credential not matched)
-        result1 = scanner.add_content(window1)
+        _result1 = scanner.add_content(window1)
         # window1 scan: overlap="" + window1 → partial credential may not match
         # The overlap buffer is set to last 128 chars of window1
-        
+
         # Add window 2 — overlap should include cred_first_half
-        result2 = scanner.add_content(window2)
-        
+        _result2 = scanner.add_content(window2)
+
         # If the credential is assembled in overlap+window2, it should be detected
         # This test verifies the MECHANISM; the exact credential must match a real pattern
         # For this test, we use a known pattern trigger
-        
+
         # Use a real credential pattern that regex_scan knows about
         # We'll use a longer test where we know overlap carries the dangerous part
-        
+
         # Test with a simpler guaranteed-to-detect scenario:
         # The overlap buffer from window1 carries the beginning of the credential
         # into the scan text of window2
@@ -332,29 +327,29 @@ class TestOverlapBuffer:
         # and the suffix in the next window
         # Full credential: sk-testABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmn
         known_cred = "sk-testABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmn"
-        
+
         # Place the credential so it starts in the last 128 chars of window 1
         # (within OVERLAP_SIZE) and ends in window 2
         split_pos = 10  # credential split: first 10 chars in window1, rest in window2
         cred_part1 = known_cred[:split_pos]   # "sk-testABC"
         cred_part2 = known_cred[split_pos:]   # "DEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmn"
-        
+
         # window1: (WINDOW_SIZE - split_pos) clean chars + cred_part1
         window1_clean_size = WINDOW_SIZE - split_pos
         window1 = clean_text(window1_clean_size) + cred_part1
         assert len(window1) == WINDOW_SIZE
-        
+
         # window2: cred_part2 + clean text
         window2 = cred_part2 + clean_text(WINDOW_SIZE - len(cred_part2))
-        
+
         scanner_with_overlap = make_scanner()
         r1 = scanner_with_overlap.add_content(window1)
         assert r1 is None  # window1 passes (partial cred not matched)
-        
+
         # After window1, overlap_buffer contains last 128 chars of window1
         # which includes cred_part1
         assert cred_part1 in scanner_with_overlap.overlap_buffer
-        
+
         r2 = scanner_with_overlap.add_content(window2)
         # Scan text = overlap_buffer (contains cred_part1) + cred_part2 + clean
         # Full credential is reassembled → BLOCK
@@ -367,18 +362,18 @@ class TestOverlapBuffer:
         split_pos = 10
         cred_part1 = known_cred[:split_pos]
         cred_part2 = known_cred[split_pos:]
-        
+
         window1 = clean_text(WINDOW_SIZE - split_pos) + cred_part1
         window2 = cred_part2 + clean_text(WINDOW_SIZE - len(cred_part2))
-        
+
         # Scanner with overlap disabled (manually clear overlap after window1)
         scanner_no_overlap = make_scanner()
-        r1 = scanner_no_overlap.add_content(window1)
-        
+        _r1 = scanner_no_overlap.add_content(window1)
+
         # Manually clear the overlap buffer to simulate no-overlap
         scanner_no_overlap.overlap_buffer = ""
-        
-        r2 = scanner_no_overlap.add_content(window2)
+
+        _r2 = scanner_no_overlap.add_content(window2)
         # Without overlap: scan text = "" + cred_part2 + clean
         # cred_part2 alone may not match the full credential pattern → PASS
         # (suffix alone doesn't match the full credential regex)
@@ -427,9 +422,9 @@ class TestNoPaesidioInWindowScan:
 
     def test_presidio_not_called_during_window_scan(self):
         """Presidio is NEVER called during window scanning (regex-only path)."""
-        scanner = make_scanner()
+        _scanner = make_scanner()
         with patch("app.scanner.streaming_scanner.presidio_scan_worker" if False else
-                   "app.scanner.streaming_scanner.regex_scan") as mock_regex:
+                   "app.scanner.streaming_scanner.regex_scan") as _mock_regex:
             # We verify presidio_scan_worker is not imported/called in streaming_scanner
             # by checking the module doesn't import from presidio_worker
             import app.scanner.streaming_scanner as mod
@@ -438,8 +433,9 @@ class TestNoPaesidioInWindowScan:
 
     def test_streaming_scanner_import_does_not_import_presidio(self):
         """streaming_scanner.py does NOT import from presidio_worker."""
-        import app.scanner.streaming_scanner as mod
         import inspect
+
+        import app.scanner.streaming_scanner as mod
         source = inspect.getsource(mod)
         assert "presidio_scan_worker" not in source, \
             "streaming_scanner must not reference presidio_scan_worker"
@@ -480,7 +476,7 @@ class TestWindowScanLatency:
 
     def test_window_scan_latencies_p99_under_soft_gate(self):
         """Per-window scan p99 latency soft gate (hard gate 0.5ms p99 in bench_streaming.py).
-        
+
         Unit test allows 5.0ms p99 to account for cold JIT compilation on first few scans
         and shared server variance. The production benchmark (bench_streaming.py) enforces
         ≤ 0.5ms p99 on warm state.
@@ -519,9 +515,9 @@ class TestImportRules:
     def test_streaming_scanner_does_not_import_re(self):
         """streaming_scanner.py must NOT import stdlib 're'."""
         import inspect
+
         import app.scanner.streaming_scanner as mod
         source = inspect.getsource(mod)
-        import re as stdlib_re
         # Check source doesn't contain forbidden re imports
         lines = source.split("\n")
         for line in lines:
@@ -534,6 +530,7 @@ class TestImportRules:
     def test_streaming_scanner_imports_re2(self):
         """streaming_scanner.py must import re2 (google-re2)."""
         import inspect
+
         import app.scanner.streaming_scanner as mod
         source = inspect.getsource(mod)
         assert "import re2" in source, "streaming_scanner must import re2"

@@ -27,7 +27,6 @@ from app.audit.models import AuditEvent
 from app.models.scan import Action, RiskLevel, ScanResult
 from app.proxy.engine import _audit_request_event
 
-
 SCAN_ID = "01REGRESSION_AUDIT_BUG_001"
 USER_ID = "user-regression-test"
 

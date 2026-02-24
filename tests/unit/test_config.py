@@ -31,7 +31,6 @@ Additional:
 
 from __future__ import annotations
 
-import os
 import textwrap
 from typing import Any
 
@@ -48,7 +47,6 @@ from app.config import (
     load_config,
 )
 from app.proxy.engine import _route_upstream
-
 
 # ─── AC-E001-08 #4: Missing config file → Config.defaults() ─────────────────
 

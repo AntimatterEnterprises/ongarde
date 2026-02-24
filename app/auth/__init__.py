@@ -16,8 +16,9 @@ Public API:
 from __future__ import annotations
 
 from app.auth.keys import (
-    KeyLimitExceededError,
     InvalidKeyError,
+    KeyLimitExceededError,
+    clear_key_cache,
     create_api_key,
     init_key_store,
     list_keys,
@@ -25,7 +26,6 @@ from app.auth.keys import (
     rotate_api_key,
     rotate_api_key_by_id,
     validate_api_key,
-    clear_key_cache,
 )
 from app.auth.middleware import authenticate_request
 

@@ -23,9 +23,7 @@ Story: E-001-S-005
 
 from __future__ import annotations
 
-import json
 from typing import Any
-from unittest.mock import AsyncMock, patch
 
 import httpx
 import pytest
@@ -34,7 +32,6 @@ from starlette.testclient import TestClient
 from app.config import Config
 from app.constants import MAX_REQUEST_BODY_BYTES, MAX_RESPONSE_BUFFER_BYTES
 from app.main import create_app
-
 
 # ─── Fixtures & Helpers ───────────────────────────────────────────────────────
 
@@ -454,8 +451,9 @@ class TestBindingSecurityWarning:
         The warning is implemented in app/config.py:load_config() and tested here
         by loading a minimal config with host: 0.0.0.0.
         """
-        import tempfile
         import os
+        import tempfile
+
         from app.config import load_config
 
         config_yaml = "version: 1\nproxy:\n  host: '0.0.0.0'\n"

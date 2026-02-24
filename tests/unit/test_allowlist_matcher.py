@@ -16,12 +16,9 @@ Story: E-009-S-002
 
 from __future__ import annotations
 
-import pytest
-
 from app.allowlist.loader import AllowlistEntry
 from app.allowlist.matcher import apply_allowlist
 from app.models.scan import Action, RiskLevel, ScanResult
-
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 

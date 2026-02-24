@@ -20,7 +20,6 @@ import pytest
 from app.models.scan import Action, ScanResult
 from app.scanner.safe_scan import scan_or_block
 
-
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
 

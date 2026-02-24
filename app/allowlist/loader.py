@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import asyncio
 import threading
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional
 
 import re2  # noqa: F401 — google-re2. NEVER: import re

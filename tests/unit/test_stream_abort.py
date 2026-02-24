@@ -106,7 +106,7 @@ class TestPayloadContent:
         second = chunks[1].decode("utf-8")
         # Extract data line
         lines = second.strip().split("\n")
-        data_line = next(l for l in lines if l.startswith("data: "))
+        data_line = next(ln for ln in lines if ln.startswith("data: "))
         json_str = data_line[len("data: "):]
         parsed = json.loads(json_str)  # Should not raise
         assert isinstance(parsed, dict)
@@ -117,9 +117,9 @@ class TestPayloadContent:
         chunks = await collect_abort_chunks(make_block_result(), tokens_delivered=42)
         second = chunks[1].decode("utf-8")
         lines = second.strip().split("\n")
-        data_line = next(l for l in lines if l.startswith("data: "))
+        data_line = next(ln for ln in lines if ln.startswith("data: "))
         payload = json.loads(data_line[len("data: "):])
-        
+
         assert "scan_id" in payload
         assert "rule_id" in payload
         assert "risk_level" in payload
@@ -257,5 +257,5 @@ def _parse_payload(chunk: bytes) -> dict:
     """Extract and parse the JSON payload from an ongarde_block SSE chunk."""
     text = chunk.decode("utf-8")
     lines = text.strip().split("\n")
-    data_line = next(l for l in lines if l.startswith("data: "))
+    data_line = next(ln for ln in lines if ln.startswith("data: "))
     return json.loads(data_line[len("data: "):])

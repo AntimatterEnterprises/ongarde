@@ -14,16 +14,10 @@ from __future__ import annotations
 import dataclasses
 from datetime import datetime, timezone
 
-import pytest
-
 from app.audit.models import (
-    ActionType,
     AuditEvent,
-    DirectionType,
-    RiskLevelType,
 )
 from app.audit.protocol import AuditBackend, EventFilters, NullAuditBackend
-
 
 # ─── AuditEvent Tests ─────────────────────────────────────────────────────────
 

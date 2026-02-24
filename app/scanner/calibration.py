@@ -38,7 +38,6 @@ from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass, field
 from typing import Optional
 
-from app.utils.logger import get_logger
 from app.constants import (
     DEFAULT_PRESIDIO_SYNC_CAP,
     PRESIDIO_CALIBRATION_ITERATIONS,
@@ -49,6 +48,7 @@ from app.constants import (
     PRESIDIO_TIMEOUT_MIN_S,
     PRESIDIO_TIMEOUT_MULTIPLIER,
 )
+from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -330,7 +330,7 @@ async def run_calibration(
                 "Calibration measurement",
                 size=size,
                 p99_ms=round(p99_ms, 2),
-                latencies_ms=[round(l, 2) for l in latencies_ms],
+                latencies_ms=[round(lat, 2) for lat in latencies_ms],
             )
 
     except Exception as exc:  # noqa: BLE001

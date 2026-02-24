@@ -7,12 +7,11 @@ Integration tests with real models are in tests/integration/ with @pytest.mark.p
 from __future__ import annotations
 
 import logging
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 import app.scanner.presidio_worker as pw
-
 
 # ─── Fixtures ─────────────────────────────────────────────────────────────────
 

@@ -14,20 +14,16 @@ from __future__ import annotations
 
 import asyncio
 import json
-from datetime import datetime, timezone
-from typing import List
-from unittest.mock import AsyncMock, MagicMock, call, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from app.audit.models import AuditEvent
-from app.models.scan import Action, RiskLevel, ScanResult
 from app.proxy.engine import (
     _log_stream_event,
     _presidio_advisory_stream_scan,
     _stream_response_scan,
 )
-
 
 SCAN_ID = "01HXXXXXXXXXX_AUDIT_TEST"
 USER_ID = "user-audit-test"
@@ -224,7 +220,6 @@ class TestAdvisoryPresidioScan:
     @pytest.mark.asyncio
     async def test_advisory_scan_sets_abort_trigger_on_pii(self):
         """Advisory scan detects PII → sets abort_trigger (AC-E004-09)."""
-        from unittest.mock import patch as mock_patch
         import asyncio
 
         abort_trigger = asyncio.Event()
@@ -232,7 +227,7 @@ class TestAdvisoryPresidioScan:
 
         # Mock ProcessPoolExecutor to return PII entities
         mock_pool = MagicMock()
-        mock_future = asyncio.get_event_loop().run_in_executor(None, lambda: None)
+        _mock_future = asyncio.get_event_loop().run_in_executor(None, lambda: None)
 
         with patch("app.proxy.engine._presidio_advisory_stream_scan") as mock_advisory:
             async def fake_advisory(*args, **kwargs):

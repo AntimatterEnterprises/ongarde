@@ -12,11 +12,8 @@ Story: E-001-S-005
 
 from __future__ import annotations
 
-import pytest
-
 from app.config import Config, ProxyConfig
 from app.run import UVICORN_BACKLOG, UVICORN_LIMIT_CONCURRENCY, UVICORN_TIMEOUT_KEEP_ALIVE
-
 
 # ─── AC-E001-05: Default binding ─────────────────────────────────────────────
 

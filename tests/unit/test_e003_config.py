@@ -18,9 +18,8 @@ import pytest
 from starlette.testclient import TestClient
 
 from app.models.scan import Action, ScanResult
-from app.scanner.safe_scan import scan_or_block, SCANNER_GLOBAL_TIMEOUT_S
+from app.scanner.safe_scan import scan_or_block
 from app.utils.health import ScanLatencyTracker
-
 
 # ─── E-003-S-007: enable_person_detection config flag ────────────────────────
 
@@ -50,8 +49,8 @@ class TestEnablePersonDetection:
 
     def test_enable_person_detection_adds_person_to_entity_set(self):
         """enable_person_detection=True → PERSON added to entity_set in startup_scan_pool."""
-        from app.scanner.pool import startup_scan_pool
         from app.scanner.calibration import CalibrationResult
+        from app.scanner.pool import startup_scan_pool
 
         config = MagicMock()
         config.scanner.entity_set = ["CREDIT_CARD", "EMAIL_ADDRESS"]
@@ -72,8 +71,8 @@ class TestEnablePersonDetection:
 
     def test_no_duplicate_person_when_already_in_entity_set(self):
         """PERSON not added twice if already in entity_set when enable_person_detection=True."""
-        from app.scanner.pool import startup_scan_pool
         from app.scanner.calibration import CalibrationResult
+        from app.scanner.pool import startup_scan_pool
 
         config = MagicMock()
         config.scanner.entity_set = ["CREDIT_CARD", "PERSON"]  # already has PERSON

@@ -51,7 +51,6 @@ from app.config import Config
 from app.main import create_app
 from app.utils.health import ScanLatencyTracker, ScannerHealth, check_scanner_health
 
-
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
 
@@ -394,8 +393,9 @@ class TestHealthScannerEndpoint:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """pool_workers == 0 when scan_pool is None (e.g., pool failed to initialize)."""
-        from app.scanner.calibration import CalibrationResult
         from unittest.mock import AsyncMock
+
+        from app.scanner.calibration import CalibrationResult
         _patch_load_config(monkeypatch)
         # Mock startup_scan_pool to return None pool (simulates pool init failure)
         monkeypatch.setattr(
@@ -604,6 +604,7 @@ class TestHealthRegressionFromS001:
         """S-001 503 body format is preserved (error wrapper + status/scanner keys)."""
         application = create_app()
         import asyncio
+
         from httpx import ASGITransport, AsyncClient
 
         async def get_503() -> Any:
@@ -764,8 +765,9 @@ class TestHealthScannerCalibrationField:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """When pool fails to init, calibration uses conservative fallback → calibration_ok=False."""
-        from app.scanner.calibration import CalibrationResult
         from unittest.mock import AsyncMock
+
+        from app.scanner.calibration import CalibrationResult
         _patch_load_config(monkeypatch)
         # Simulate pool init failure → conservative fallback
         monkeypatch.setattr(

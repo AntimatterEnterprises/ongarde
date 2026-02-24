@@ -24,7 +24,7 @@ import asyncio
 import logging
 import time
 from concurrent.futures import ProcessPoolExecutor
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 import re2  # noqa: F401 — google-re2. NEVER: import re
 

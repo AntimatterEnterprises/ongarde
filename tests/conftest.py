@@ -10,7 +10,6 @@ that sets ONGARDE_AUTH_REQUIRED=true.
 Production default is ONGARDE_AUTH_REQUIRED=true — see app/auth/middleware.py.
 """
 
-import os
 import pytest
 
 
