@@ -59,15 +59,30 @@ cp .ongarde/config.yaml.example .ongarde/config.yaml
 python -m app.run
 ```
 
-Then point your agent at `http://localhost:4242`:
+Then point your agent at `http://localhost:4242`.
+
+OnGarde works with **any OpenAI-compatible API** — which is the standard protocol used by OpenAI, Anthropic, Mistral, Groq, Together AI, OpenRouter, Ollama, LM Studio, and most agent platforms:
 
 ```python
-# OpenAI SDK
-client = OpenAI(base_url="http://localhost:4242/v1")
+# Works with any provider using the OpenAI-compatible API standard
+from openai import OpenAI
 
-# Environment variable
+# OpenAI
+client = OpenAI(api_key="sk-...", base_url="http://localhost:4242/v1")
+
+# Anthropic (OpenAI-compatible endpoint)
+client = OpenAI(api_key="sk-ant-...", base_url="http://localhost:4242/v1")
+
+# Groq, Together AI, OpenRouter, Mistral, etc.
+client = OpenAI(api_key="your-key", base_url="http://localhost:4242/v1")
+```
+
+```bash
+# Or set via environment variable — works for all frameworks and SDKs
 export OPENAI_BASE_URL="http://localhost:4242/v1"
 ```
+
+> **Note:** The "OpenAI SDK" is the industry-standard protocol for LLM APIs — not just OpenAI. If your agent platform supports a `baseUrl` or `base_url` setting, OnGarde works with it.
 
 > **Authentication is on by default.** `ONGARDE_AUTH_REQUIRED=true` — every request requires an API key. The `npx @ongarde/openclaw init` wizard creates your first key automatically. For manual setup, see the [API key instructions in QUICKSTART.md](QUICKSTART.md#api-authentication-required-by-default).
 
