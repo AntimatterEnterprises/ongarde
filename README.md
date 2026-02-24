@@ -7,7 +7,7 @@ OnGarde is a transparent security proxy for self-hosted AI agent platforms. It i
 [![Python](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-green.svg)](https://fastapi.tiangolo.com/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-1%2C192%20passing-brightgreen.svg)](#testing)
+[![Tests](https://img.shields.io/badge/tests-1%2C222%20passing-brightgreen.svg)](#testing)
 
 ---
 
@@ -70,6 +70,8 @@ client = OpenAI(base_url="http://localhost:4242/v1")
 export OPENAI_BASE_URL="http://localhost:4242/v1"
 ```
 
+> **Authentication is on by default.** `ONGARDE_AUTH_REQUIRED=true` — every request requires an API key. The `npx @ongarde/openclaw init` wizard creates your first key automatically. For manual setup, see the [API key instructions in QUICKSTART.md](QUICKSTART.md#api-authentication-required-by-default).
+
 See [QUICKSTART.md](QUICKSTART.md) for full setup details.
 
 ---
@@ -108,7 +110,7 @@ ongarde/
 │   └── utils/              # Logging, helpers
 ├── packages/
 │   └── openclaw/           # npm CLI (@ongarde/openclaw)
-├── tests/                  # 1,192 tests (unit, integration, security)
+├── tests/                  # 1,222 tests (unit, integration, security)
 ├── benchmarks/             # Performance benchmarks & results
 ├── demo/                   # Interactive demo scripts
 ├── tools/                  # Diagnostic & helper scripts
@@ -125,6 +127,8 @@ Once running, open `http://localhost:4242/dashboard` to see:
 - Recent blocked events with full context
 - Scanner health and quota status
 - API key management
+
+> **Localhost only.** The dashboard is accessible exclusively from the local machine. Requests from remote IPs are rejected with HTTP 403, enforced at the code level.
 
 ---
 
@@ -156,7 +160,7 @@ pytest tests/security/ -v
 pytest tests/ --cov=app --cov-report=term-missing
 ```
 
-1,192 tests. 0 failures.
+1,222 tests. 0 failures.
 
 ---
 

@@ -118,11 +118,67 @@ OnGarde buffers upstream responses in memory for scanning only if the response b
 
 | Variable | Default | Description |
 |----------|---------|-------------|
+| `ONGARDE_AUTH_REQUIRED` | `true` | Require API key authentication. Set to `false` only for local dev/testing. |
 | `ONGARDE_PORT` | `4242` | Override `proxy.port` from config |
 | `ONGARDE_CONFIG` | (auto-detect) | Explicit path to config file |
-| `DEBUG` | `false` | Enable debug logging and hot-reload |
+| `DEBUG` | `false` | Enable debug mode: re-enables `/docs` and `/redoc` Swagger UI, enables hot-reload |
 | `LOG_LEVEL` | `INFO` | Logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
 | `JSON_LOGS` | `true` | Structured JSON logging (set `false` for human-readable dev output) |
+
+---
+
+## API Authentication
+
+API key authentication is **enabled by default** (`ONGARDE_AUTH_REQUIRED=true`). Every request to the OnGarde proxy must include a valid key. Set `ONGARDE_AUTH_REQUIRED=false` only in isolated local dev/testing environments — never in production.
+
+### Creating the First Key
+
+**Option 1 — Init wizard (recommended):**
+
+```bash
+npx @ongarde/openclaw init
+```
+
+The wizard installs OnGarde, starts it, and prints the first API key during setup.
+
+**Option 2 — Direct API call** (run this once immediately after first start, before enabling auth):
+
+```bash
+curl -X POST http://127.0.0.1:4242/dashboard/api/keys \
+  -H "Content-Type: application/json" \
+  -d '{"name": "production"}'
+```
+
+Response:
+```json
+{
+  "key": "ong-xxxxxxxxxxxxxxxxxxxx",
+  "name": "production",
+  "created_at": "2026-02-24T19:00:00Z"
+}
+```
+
+> The key is shown **only once** at creation time. Store it securely.
+
+### Passing the Key in Requests
+
+Include one of the following headers on every proxied request:
+
+```
+X-OnGarde-Key: ong-xxxxxxxxxxxxxxxxxxxx
+```
+
+or
+
+```
+Authorization: Bearer ong-xxxxxxxxxxxxxxxxxxxx
+```
+
+Both formats are accepted. The `X-OnGarde-Key` header takes precedence if both are present.
+
+### Key Management
+
+Additional keys can be created, listed, and revoked via the dashboard (`/dashboard`) or the key management API (`/dashboard/api/keys/*`). Key management endpoints are rate-limited to **20 requests/minute** per IP.
 
 ---
 

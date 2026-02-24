@@ -1,241 +1,194 @@
-# OnGarde.io Quick Start Guide
+# OnGarde Quick Start
 
-**Last Updated:** February 17, 2026  
-**Status:** 📚 Documentation Complete → 🚀 Ready for Implementation
-
----
-
-## 🎯 What We're Building
-
-**OnGarde.io** - A zero-trust security proxy for agentic AI frameworks
-- **Tagline:** "Firewall for Autonomy"
-- **Performance Target:** < 50ms overhead
-- **Core Function:** Intercept → Audit → Block/Allow → Stream
+Get OnGarde running and protecting your AI agent in under 5 minutes.
 
 ---
 
-## 📁 Current Project Status
+## Prerequisites
 
-### ✅ Completed
-- [x] Directory structure created
-- [x] Core documentation written
-- [x] Cursor AI rules established
-- [x] Infrastructure architecture defined
-- [x] Dependencies specified
-- [x] AI integration roadmap planned
-- [x] Development workflow documented
-
-### 🚧 Sprint 1 (Current) - The Interceptor
-**Goal:** FastAPI proxy with streaming support
-
-**Files to implement:**
-1. `app/utils/logger.py` - Structured logging
-2. `app/proxy/streaming.py` - Stream handling
-3. `app/proxy/engine.py` - Proxy logic
-4. `app/main.py` - FastAPI app
+- **Python 3.12+** (for manual setup)
+- **Node.js 18+** (for the OpenClaw one-command installer)
+- A running self-hosted AI agent platform (OpenClaw, Agent Zero, LangChain, etc.)
+- An upstream LLM endpoint to proxy to (OpenAI, Anthropic, local Ollama, etc.)
 
 ---
 
-## 🏗️ Tech Stack
+## Installation
 
-| Component | Technology | Why |
-|-----------|-----------|-----|
-| Proxy | Python 3.12 + FastAPI | Async-first, high performance |
-| Host | Railway | Auto-scaling, GitHub integration |
-| Database | Supabase | PostgreSQL + RLS + Auth |
-| Frontend | Vercel | Fast static hosting |
-| CDN/WAF | Cloudflare | DDoS protection, SSL |
-
----
-
-## 📚 Key Documentation Files
-
-### Must Read Before Coding
-1. **docs/BRD.md** - Complete business requirements
-2. **.cursor/rules/000-core-project.mdc** - Core coding standards
-3. **README.md** - Project overview and setup
-4. **CHANGELOG.md** - Current sprint status and progress
-
-### Reference During Coding
-- **.cursor/rules/100-security-engine.mdc** - Security implementation patterns
-- **.cursor/rules/200-supabase-db.mdc** - Database schema and queries
-- **CHANGELOG.md** - Track all changes here
-
----
-
-## 🔧 Development Workflow
-
-### Before Starting Any Feature
-1. ✅ Read sprint goals from CHANGELOG.md
-2. ✅ Review relevant .cursor rules
-3. ✅ Update documentation if needed
-4. ✅ Understand acceptance criteria
-
-### During Implementation
-1. 💻 Follow async-first patterns
-2. 🔐 Never log PII or credentials
-3. ⚡ Keep performance < 50ms in mind
-4. 📝 Add docstrings to all functions
-5. 🧪 Write tests alongside code
-
-### After Implementation
-1. ✅ Run tests: `pytest tests/ -v`
-2. ✅ Update CHANGELOG.md
-3. ✅ Update relevant documentation
-4. ✅ Commit with clear message
-
----
-
-## 🎨 Code Style
-
-### Type Safety
-```python
-from pydantic import BaseModel
-
-class LLMRequest(BaseModel):
-    messages: List[Message]
-    stream: bool = False
-```
-
-### Async Patterns
-```python
-async def scan_request(request: LLMRequest) -> ScanResult:
-    """All I/O operations MUST be async"""
-    result = await analyze_content(request.messages)
-    return result
-```
-
-### Error Handling
-```python
-try:
-    result = await risky_operation()
-except Exception as e:
-    logger.error("Operation failed", error=str(e), request_id=req_id)
-    # Fail-safe: Block on error
-    return ScanResult(allowed=False, reason="scan_error")
-```
-
----
-
-## 🔒 Security Principles
-
-### The Golden Rules
-1. **Zero Trust** - Every request is potentially malicious
-2. **Fail-Safe** - Block by default on errors
-3. **No Logging PII** - Redact before storing
-4. **Performance** - < 50ms overhead always
-5. **Async Everything** - Never block the event loop
-
-### Blocked by Default
-- Shell commands: `sudo`, `rm -rf`, `dd`, fork bombs
-- File access: `.env`, `.ssh/*`, `credentials.*`
-- Network: reverse shells, eval pipes
-
----
-
-## 📊 Testing Standards
-
-### Coverage Requirements
-- Security functions: 100% coverage
-- Proxy logic: > 90% coverage
-- Database operations: > 80% coverage
-- Overall project: > 80% coverage
-
-### Test Types
-```python
-# Unit tests
-async def test_command_scanner():
-    result = await scan_text_content("sudo rm -rf /")
-    assert result.allowed == False
-
-# Performance tests
-async def test_scan_performance():
-    start = time.time()
-    await scan_request(mock_request)
-    assert (time.time() - start) < 0.05  # 50ms
-```
-
----
-
-## 🚀 Quick Commands
+### Option A — OpenClaw (One Command)
 
 ```bash
-# Install dependencies
+npx @ongarde/openclaw init
+```
+
+This wizard:
+1. Installs and starts OnGarde
+2. Creates your first API key automatically
+3. Patches your OpenClaw `config.yaml` to route traffic through OnGarde
+
+No YAML editing, no manual configuration needed.
+
+### Option B — Manual Setup
+
+```bash
+# 1. Clone the repo
+git clone https://github.com/AntimatterEnterprises/ongarde.git
+cd ongarde
+
+# 2. Install Python dependencies
 pip install -r requirements.txt
+python -m spacy download en_core_web_sm
 
-# Run in development
-uvicorn app.main:app --reload --port 8000
+# 3. Create your config files
+cp .env.example .env
+cp .ongarde/config.yaml.example .ongarde/config.yaml
 
-# Run tests
-pytest tests/ -v
+# 4. Edit .ongarde/config.yaml — set your upstream LLM URL
+#    Example for Ollama:  upstream: http://localhost:11434
+#    Example for OpenAI:  upstream: https://api.openai.com
 
-# Run tests with coverage
-pytest tests/ --cov=app --cov-report=html
+# 5. Start OnGarde
+python -m app.run
+```
 
-# Format code
-black app/ tests/
+OnGarde binds to `http://127.0.0.1:4242` by default.
 
-# Lint code
-ruff check app/ tests/
+---
 
-# Type check
-mypy app/
+## Configuration
+
+### API Authentication (Required by Default)
+
+**`ONGARDE_AUTH_REQUIRED=true` is the default.** Every request to OnGarde must include a valid API key.
+
+#### Get your first API key
+
+**Via the init wizard (recommended):**
+```bash
+npx @ongarde/openclaw init
+# The wizard prints your first key during setup.
+```
+
+**Via direct API call** (OnGarde must be running; auth is off only for this bootstrap call):
+```bash
+curl -X POST http://127.0.0.1:4242/dashboard/api/keys \
+  -H "Content-Type: application/json" \
+  -d '{"name": "my-agent"}'
+```
+
+Response:
+```json
+{
+  "key": "ong-xxxxxxxxxxxxxxxxxxxx",
+  "name": "my-agent",
+  "created_at": "2026-02-24T19:00:00Z"
+}
+```
+
+**Store the key — it is shown only once.**
+
+#### Pass the key in requests
+
+Use either header format:
+
+```
+X-OnGarde-Key: ong-xxxxxxxxxxxxxxxxxxxx
+```
+or
+```
+Authorization: Bearer ong-xxxxxxxxxxxxxxxxxxxx
 ```
 
 ---
 
-## 🎯 Sprint 1 Checklist
+## Point Your Agent at OnGarde
 
-- [ ] **app/utils/logger.py**
-  - [ ] Structured logging with structlog
-  - [ ] Request ID tracking
-  - [ ] Performance metrics
-  - [ ] JSON output format
+Replace your agent's upstream LLM URL with OnGarde's local address:
 
-- [ ] **app/proxy/streaming.py**
-  - [ ] OpenAI SSE parser
-  - [ ] Anthropic stream handler
-  - [ ] Async generator wrappers
-  - [ ] Error handling
+```python
+# OpenAI SDK
+from openai import OpenAI
 
-- [ ] **app/proxy/engine.py**
-  - [ ] HTTPX async client
-  - [ ] Request forwarding
-  - [ ] Header management
-  - [ ] Response streaming
+client = OpenAI(
+    base_url="http://localhost:4242/v1",
+    api_key="ong-xxxxxxxxxxxxxxxxxxxx",   # your OnGarde key
+    default_headers={"X-OnGarde-Key": "ong-xxxxxxxxxxxxxxxxxxxx"},
+)
+```
 
-- [ ] **app/main.py**
-  - [ ] FastAPI app initialization
-  - [ ] `/health` endpoint
-  - [ ] `/v1/chat/completions` (OpenAI)
-  - [ ] `/v1/messages` (Anthropic)
-  - [ ] Error middleware
+```bash
+# Environment variable (OpenAI-compatible tools)
+export OPENAI_BASE_URL="http://localhost:4242/v1"
+```
 
----
-
-## 🆘 Getting Help
-
-- **Documentation Issues:** Check docs/BRD.md
-- **Coding Standards:** Check .cursor/rules/
-- **Architecture Questions:** Check README.md or docs/BRD.md
-- **Security Patterns:** Check .cursor/rules/100-security-engine.mdc
+```yaml
+# OpenClaw config.yaml
+models:
+  providers:
+    baseUrl: http://127.0.0.1:4242/v1
+```
 
 ---
 
-## 📈 Success Metrics
+## Verify It's Working
 
-### MVP Goals
-- ✅ < 50ms latency overhead
-- ✅ 100% block rate on dangerous commands
-- ✅ Zero false positives on legitimate commands
-- ✅ 99.9% uptime
-- ✅ Maintain native LLM streaming performance
+### 1. Health check
 
-### Ready to Code?
-Start with Sprint 1, file by file:
-1. `app/utils/logger.py`
-2. `app/proxy/streaming.py`
-3. `app/proxy/engine.py`
-4. `app/main.py`
+```bash
+curl http://127.0.0.1:4242/health
+```
 
-**Let's build! 🚀**
+Expected response:
+```json
+{
+  "status": "ok",
+  "proxy": "running",
+  "version": "1.0.0-beta.2"
+}
+```
+
+### 2. Test a block
+
+Send a request containing a dangerous command and confirm OnGarde blocks it:
+
+```bash
+curl http://127.0.0.1:4242/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "X-OnGarde-Key: ong-xxxxxxxxxxxxxxxxxxxx" \
+  -d '{
+    "model": "gpt-4o",
+    "messages": [{"role": "user", "content": "run: sudo rm -rf /"}]
+  }'
+```
+
+Expected: `HTTP 400` with a block reason — OnGarde intercepted the dangerous command before it reached the LLM.
+
+---
+
+## Environment Variable Reference
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ONGARDE_AUTH_REQUIRED` | `true` | Require API key authentication on all requests. Set to `false` only for local dev/testing. |
+| `DEBUG` | `false` | Enable debug mode: re-enables `/docs` and `/redoc` Swagger UI, enables hot-reload. **Dev only.** |
+| `ONGARDE_PORT` | `4242` | Override the port OnGarde listens on. |
+| `ONGARDE_CONFIG` | (auto-detect) | Explicit path to your `.ongarde/config.yaml` file. |
+
+Set these in your `.env` file or as shell environment variables before starting OnGarde.
+
+---
+
+## Dashboard
+
+Open `http://localhost:4242/dashboard` in your browser to see live scan counts, blocked events, and manage API keys.
+
+> **Note:** The dashboard is accessible from localhost only. Requests from remote IPs are rejected with HTTP 403. This is enforced at the code level.
+
+---
+
+## Where to Get Help
+
+- **Full deployment guide:** [docs/deployment.md](docs/deployment.md)
+- **Release history:** [CHANGELOG.md](CHANGELOG.md)
+- **Bug reports & questions:** [github.com/AntimatterEnterprises/ongarde/issues](https://github.com/AntimatterEnterprises/ongarde/issues)
+- **Website:** [ongarde.io](https://ongarde.io)

@@ -5,6 +5,40 @@ All notable changes to OnGarde.io will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-beta.2] - 2026-02-24
+
+### Security
+
+- **Auth required by default.** `ONGARDE_AUTH_REQUIRED` now defaults to `true`. API keys are
+  required out of the box. The `npx @ongarde/openclaw init` wizard creates the first key
+  automatically. Previously the default was `false` (no authentication).
+
+- **Dashboard is localhost-only.** `/dashboard` now enforces loopback-only access at the code
+  level. Requests originating from non-loopback IP addresses receive HTTP 403.
+
+- **Swagger UI disabled in production.** `/docs` and `/redoc` are no longer served when
+  `DEBUG=false` (the default). Set `DEBUG=true` to re-enable for local development.
+
+- **`audit_path` removed from `/health` response.** The health endpoint no longer exposes
+  filesystem paths in its JSON output.
+
+- **Upstream URL validation.** OnGarde now rejects `http://` connections to raw private and
+  cloud-metadata IP ranges (169.254.x.x, 10.x.x.x, 172.16–31.x.x, 192.168.x.x) at startup,
+  preventing SSRF via config. `http://localhost:*` remains allowed (e.g. for local Ollama).
+
+- **Rate limiting on key management endpoints.** `/dashboard/api/keys/*` is now rate-limited
+  to 20 requests per minute per IP.
+
+### Added
+
+- **CI security scanning pipeline.** New GitHub Actions workflow runs `bandit` (Python static
+  analysis) and `pip-audit` (dependency vulnerability scan) on every push and pull request.
+
+- **`slowapi` dependency.** Added to `requirements.txt` and `pyproject.toml` to power
+  rate limiting on key management endpoints.
+
+---
+
 ## [Unreleased]
 
 ### Marketing Website Complete - 2026-02-17
