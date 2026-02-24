@@ -103,21 +103,20 @@ Authorization: Bearer ong-xxxxxxxxxxxxxxxxxxxx
 
 ## Point Your Agent at OnGarde
 
-Replace your agent's upstream LLM URL with OnGarde's local address:
+Replace your agent's upstream LLM URL with OnGarde's local address. OnGarde works with **any OpenAI-compatible API** — the standard protocol used by OpenAI, Anthropic, Mistral, Groq, OpenRouter, Ollama, and most agent platforms:
 
 ```python
-# OpenAI SDK
+# Any provider using the OpenAI-compatible API standard
 from openai import OpenAI
 
 client = OpenAI(
     base_url="http://localhost:4242/v1",
     api_key="ong-xxxxxxxxxxxxxxxxxxxx",   # your OnGarde key
-    default_headers={"X-OnGarde-Key": "ong-xxxxxxxxxxxxxxxxxxxx"},
 )
 ```
 
 ```bash
-# Environment variable (OpenAI-compatible tools)
+# Environment variable — works for all frameworks and SDKs
 export OPENAI_BASE_URL="http://localhost:4242/v1"
 ```
 
