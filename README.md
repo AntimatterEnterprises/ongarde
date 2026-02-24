@@ -15,12 +15,7 @@ OnGarde is a transparent security proxy for self-hosted AI agent platforms. It i
 
 OnGarde sits between your AI agent and the LLM provider. Zero code changes required — just point your `baseUrl` at OnGarde.
 
-```
-Agent → OpenClaw Gateway → OnGarde Proxy → LLM Provider
-                                ↑
-                         Scans every request
-                         and response here
-```
+![OnGarde Architecture](docs/images/architecture.jpg)
 
 **Blocks by default:**
 - 🔑 Credential & API key leaks
@@ -29,11 +24,15 @@ Agent → OpenClaw Gateway → OnGarde Proxy → LLM Provider
 - 🪪 PII (SSNs, credit cards, personal data)
 - 📁 Sensitive file access (`.env`, `.ssh/*`, `/etc/passwd`)
 
+![What OnGarde Blocks](docs/images/what-blocks.jpg)
+
 **Fail-safe:** errors and timeouts default to BLOCK — security over availability.
 
 ---
 
 ## Quick Start
+
+![Get Started in 3 Steps](docs/images/setup-steps.jpg)
 
 ### OpenClaw (One Command)
 
