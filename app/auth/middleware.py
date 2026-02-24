@@ -15,11 +15,11 @@ Non-ong- Authorization headers (e.g., 'Bearer sk-openai-...') are NOT consumed
 here — they are forwarded unchanged to the upstream LLM provider.
 
 Auth control:
-  - ONGARDE_AUTH_REQUIRED=true  → key validation enforced (production mode)
-  - ONGARDE_AUTH_REQUIRED=false → auth bypassed, user_id='anonymous' (default)
+  - ONGARDE_AUTH_REQUIRED=true  → key validation enforced (default — production mode)
+  - ONGARDE_AUTH_REQUIRED=false → auth bypassed, user_id='anonymous' (testing/dev only)
 
-The default is false for backward compatibility with existing deployments
-and tests. Set ONGARDE_AUTH_REQUIRED=true in production.
+The default is true. Set ONGARDE_AUTH_REQUIRED=false only for local development
+or automated tests. Never run in production with auth disabled.
 
 Architecture: architecture.md §7.4
 Story: E-006-S-004
@@ -50,7 +50,7 @@ def _is_auth_required() -> bool:
     Returns:
         True if ONGARDE_AUTH_REQUIRED=true (case-insensitive), else False.
     """
-    return os.environ.get("ONGARDE_AUTH_REQUIRED", "false").lower() == "true"
+    return os.environ.get("ONGARDE_AUTH_REQUIRED", "true").lower() == "true"
 
 
 def _extract_ong_bearer(authorization: str) -> str | None:
@@ -88,7 +88,7 @@ async def authenticate_request(request: Request) -> str:
     Returns:
         user_id (str): The authenticated user's ID on success.
                        Returns 'anonymous' when ONGARDE_AUTH_REQUIRED=false and
-                       no key is present (backward-compatible default).
+                       no key is present (dev/test bypass mode only).
 
     Raises:
         HTTPException(401): If no OnGarde key is present or the key is invalid
@@ -102,15 +102,15 @@ async def authenticate_request(request: Request) -> str:
         request.headers.get("Authorization", "")
     )
 
-    # ── Auth bypass mode (ONGARDE_AUTH_REQUIRED=false, the default) ───────
-    # Allows existing deployments and tests to work without API keys.
+    # ── Auth bypass mode (ONGARDE_AUTH_REQUIRED=false) ───────────────────
+    # For local development and automated tests ONLY.
     # In bypass mode, ALL requests are treated as user_id='anonymous'.
-    # Use ONGARDE_AUTH_REQUIRED=true in production to enforce key validation.
+    # NEVER set ONGARDE_AUTH_REQUIRED=false in production.
     if not _is_auth_required():
         return "anonymous"
 
-    # ── Strict auth mode (ONGARDE_AUTH_REQUIRED=true) ──────────────────── 
-    # Only reached when _is_auth_required() == True
+    # ── Strict auth mode (ONGARDE_AUTH_REQUIRED=true — the default) ──────
+    # All requests must carry a valid ong- API key.
     if not key or not key.startswith("ong-"):
         logger.warning(
             "Authentication failed: no OnGarde key",

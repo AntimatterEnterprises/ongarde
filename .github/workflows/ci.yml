@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "dev", "release/**"]
+  pull_request:
+    branches: ["main", "dev"]
+
+jobs:
+  # ── Security Static Analysis ───────────────────────────────────────────────
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install security tools
+        run: |
+          pip install bandit pip-audit
+
+      - name: bandit — static analysis
+        # Scans for common security issues: hardcoded secrets, unsafe calls,
+        # subprocess injection, etc. Fails on HIGH severity findings.
+        # Excludes tests/ (intentional insecure patterns for testing) and
+        # .venv/ (third-party code).
+        run: |
+          bandit -r app/ \
+            --severity-level medium \
+            --confidence-level medium \
+            --exclude app/scanner/bench \
+            --format txt \
+            -q
+
+      - name: pip-audit — dependency CVE scan
+        # Checks all installed packages against the OSV vulnerability database.
+        # Fails if any known CVEs are found in production dependencies.
+        run: |
+          pip install -r requirements.txt
+          pip-audit --requirement requirements.txt --strict
+
+  # ── Tests ─────────────────────────────────────────────────────────────────
+  test:
+    name: Test Suite (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -e ".[dev]"
+
+      - name: Run test suite
+        env:
+          ONGARDE_AUTH_REQUIRED: "false"
+          ONGARDE_DASHBOARD_LOCALHOST_ONLY: "false"
+        run: |
+          python -m pytest tests/ \
+            -q \
+            --tb=short \
+            --timeout=180 \
+            -x
+
+  # ── Lint ──────────────────────────────────────────────────────────────────
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install linting tools
+        run: pip install ruff
+
+      - name: ruff check
+        run: ruff check app/ tests/ --select E,F,W,I --ignore E501

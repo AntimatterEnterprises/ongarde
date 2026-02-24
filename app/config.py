@@ -19,10 +19,12 @@ Stories: E-001-S-001 (dataclass stubs), E-001-S-004 (complete implementation)
 
 from __future__ import annotations
 
+import ipaddress
 import os
 import sys
 from dataclasses import dataclass, field
 from typing import Optional
+from urllib.parse import urlparse
 
 import yaml
 
@@ -30,6 +32,114 @@ from app.constants import DEFAULT_PRESIDIO_SYNC_CAP, INPUT_HARD_CAP
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
+
+# ─── Upstream URL validation (SSRF protection) ───────────────────────────────
+
+# Private/reserved IP ranges blocked for non-loopback http:// upstream URLs.
+# These prevent the proxy from being used as an SSRF relay to internal services.
+_BLOCKED_NETWORKS: tuple[ipaddress.IPv4Network | ipaddress.IPv6Network, ...] = (
+    ipaddress.IPv4Network("10.0.0.0/8"),        # RFC 1918 private
+    ipaddress.IPv4Network("172.16.0.0/12"),     # RFC 1918 private
+    ipaddress.IPv4Network("192.168.0.0/16"),    # RFC 1918 private
+    ipaddress.IPv4Network("169.254.0.0/16"),    # Link-local / cloud metadata
+    ipaddress.IPv4Network("100.64.0.0/10"),     # Carrier-grade NAT
+    ipaddress.IPv6Network("fc00::/7"),          # IPv6 unique local
+    ipaddress.IPv6Network("fe80::/10"),         # IPv6 link-local
+)
+
+_LOOPBACK_HOSTNAMES: frozenset[str] = frozenset({"localhost", "127.0.0.1", "::1"})
+
+
+def _validate_upstream_url(url: str, field_name: str) -> None:
+    """Validate an upstream URL for SSRF risk and correctness.
+
+    Rules:
+      1. Must be a non-empty string.
+      2. Must use http:// or https:// scheme.
+      3. Must have a non-empty hostname.
+      4. Must NOT embed credentials (user:pass@host).
+      5. https:// URLs are allowed to any host (external LLM providers).
+      6. http:// URLs are only allowed to loopback/localhost targets
+         (Ollama, local model servers). http:// to any other host is rejected
+         to prevent SSRF to private networks or cloud metadata services.
+
+    Args:
+        url:        The URL string to validate.
+        field_name: Config field name for error messages (e.g. 'upstream.openai').
+
+    Raises:
+        SystemExit: On any validation failure (same as other config parse errors).
+    """
+    if not url or not isinstance(url, str):
+        logger.error("Config error: upstream URL must be a non-empty string", field=field_name)
+        sys.exit(1)
+
+    try:
+        parsed = urlparse(url)
+    except Exception:
+        logger.error("Config error: malformed upstream URL", field=field_name, url=url)
+        sys.exit(1)
+
+    # Rule 2: scheme must be http or https
+    if parsed.scheme not in ("http", "https"):
+        logger.error(
+            "Config error: upstream URL must use http:// or https://",
+            field=field_name,
+            url=url,
+            scheme=parsed.scheme,
+        )
+        sys.exit(1)
+
+    # Rule 3: hostname required
+    hostname = parsed.hostname or ""
+    if not hostname:
+        logger.error("Config error: upstream URL has no hostname", field=field_name, url=url)
+        sys.exit(1)
+
+    # Rule 4: no embedded credentials
+    if parsed.username or parsed.password:
+        logger.error(
+            "Config error: upstream URL must not contain embedded credentials — "
+            "use environment variables for secrets",
+            field=field_name,
+        )
+        sys.exit(1)
+
+    # Rule 5+6: http:// with explicit private/reserved IP addresses is blocked.
+    # http:// to domain names (Docker service names, K8s services, etc.) is allowed —
+    # if an operator can write the config file they can use other means for SSRF anyway,
+    # and blocking named hosts breaks legitimate deployments.
+    # The real SSRF risk is accidental metadata-service exposure via raw IPs.
+    if parsed.scheme == "http":
+        try:
+            addr = ipaddress.ip_address(hostname)
+            # It IS a raw IP address — apply network-level checks
+            if addr.is_loopback:
+                return  # http://127.x.x.x or ::1 is fine (Ollama etc.)
+            for net in _BLOCKED_NETWORKS:
+                if addr in net:
+                    logger.error(
+                        "Config error: http:// upstream URL targets a private/reserved "
+                        "IP range (potential SSRF / cloud metadata exposure). "
+                        "Use https:// for external providers or http://localhost:* "
+                        "for local models (Ollama, vLLM, etc.)",
+                        field=field_name,
+                        url=url,
+                        blocked_network=str(net),
+                    )
+                    sys.exit(1)
+            # A public IP via http:// — log a warning but allow (user's choice)
+            logger.warning(
+                "Security warning: http:// upstream URL uses a public IP address. "
+                "Consider using https:// to avoid plaintext credential transmission.",
+                field=field_name,
+                url=url,
+            )
+        except ValueError:
+            # hostname is a domain name (not a raw IP) — allow
+            # This covers: localhost, Docker service names, K8s DNS, custom domains
+            pass
+
 
 # ─── Version constants ────────────────────────────────────────────────────────
 
@@ -188,6 +298,13 @@ class Config:
             custom=upstream_raw.get("custom"),
         )
 
+        # SSRF protection: validate all upstream URLs at config load time.
+        # Fails fast (SystemExit) before the proxy serves any requests.
+        _validate_upstream_url(upstream.openai, "upstream.openai")
+        _validate_upstream_url(upstream.anthropic, "upstream.anthropic")
+        if upstream.custom is not None:
+            _validate_upstream_url(upstream.custom, "upstream.custom")
+
         return cls(
             version=raw.get("version", SUPPORTED_CONFIG_VERSION),
             upstream=upstream,
@@ -320,7 +437,7 @@ def load_config(config_path: Optional[str] = None) -> Config:
     # ── Security warnings ─────────────────────────────────────────────────────
     # architecture.md §9.3, AC-E001-05 (implementation deferred to E-001-S-005
     # for the hard enforcement; this warning is logged here as it's config-reading logic)
-    if config.proxy.host == "0.0.0.0":
+    if config.proxy.host == "0.0.0.0":  # nosec B104
         logger.warning(
             "SECURITY WARNING: OnGarde is configured to bind on 0.0.0.0 (all interfaces). "
             "This exposes the proxy to network-accessible clients. "

@@ -57,7 +57,6 @@ async def health(request: Request) -> dict[str, Any]:
           "avg_scan_ms": 0.0,
           "queue_depth": 0,
           "deployment_mode": "self-hosted" | "managed",
-          "audit_path": "/path/to/audit.db" | null
         }
 
     Response body (503):
@@ -110,9 +109,9 @@ async def health(request: Request) -> dict[str, Any]:
         "avg_scan_ms": scanner_health.avg_latency_ms,
         "queue_depth": scanner_health.queue_depth,
         "deployment_mode": "self-hosted" if is_self_hosted else "managed",
-        "audit_path": (
-            os.path.expanduser(config.audit.path) if is_self_hosted else None
-        ),
+        # audit_path intentionally omitted — filesystem paths are not exposed
+        # via the unauthenticated health endpoint (SEC-006).
+        # Use the dashboard or CLI for storage diagnostics.
     }
 
 

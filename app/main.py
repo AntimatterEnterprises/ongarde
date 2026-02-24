@@ -49,11 +49,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.routing import APIRouter
 
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+
 from app.audit.factory import create_audit_backend
 from app.audit.protocol import AuditBackend
+from app.auth.limiter import limiter
 from app.auth.router import router as auth_router
 from app.config import Config, load_config
 from app.dashboard.api import router as dashboard_router
+from app.dashboard.middleware import DashboardLocalhostMiddleware
 from app.health import router as health_router
 from app.proxy.engine import create_http_client, router as engine_router, shutdown_proxy_engine
 from app.proxy.middleware import BodySizeLimitMiddleware
@@ -397,19 +403,28 @@ def create_app() -> FastAPI:
     Returns:
         Configured FastAPI application with lifespan, routers, and middleware.
     """
+    # Disable Swagger UI and ReDoc in production — they expose the full API schema
+    # to anyone who can reach the port, aiding enumeration.
+    # Re-enable by setting DEBUG=true (local development only).
+    _debug = os.getenv("DEBUG", "false").lower() == "true"
+
     application = FastAPI(
         title="OnGarde Proxy",
         description="En Garde — Runtime content security layer for self-hosted AI agent platforms",
         version="1.0.0",
         lifespan=lifespan,
-        # Disable automatic /docs redirect to /health on 404 — keep things simple
-        docs_url="/docs",
-        redoc_url="/redoc",
+        docs_url="/docs" if _debug else None,
+        redoc_url="/redoc" if _debug else None,
+        openapi_url="/openapi.json" if _debug else None,
     )
 
     # Initialize ready flag before lifespan — ensures /health returns 503
     # on any request that somehow arrives before startup completes.
     application.state.ready = False
+
+    # Rate limiter (SEC-007) — attached to app state as required by slowapi.
+    application.state.limiter = limiter
+    application.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
     # CORS middleware — E-009: restricted to localhost origins (AC-E009: CORS fix).
     # The proxy and dashboard are localhost-only services (architecture.md §9.3).
@@ -431,9 +446,18 @@ def create_app() -> FastAPI:
     # Enforces MAX_REQUEST_BODY_BYTES (1 MB) hard cap; returns HTTP 413 for oversized
     # bodies BEFORE any scan gate or upstream connection is attempted.
     # NOTE: In Starlette, the LAST-added middleware is OUTERMOST (runs first).
-    # BodySizeLimitMiddleware (added last) runs BEFORE CORSMiddleware in the chain.
+    # BodySizeLimitMiddleware (added second-to-last) runs BEFORE CORSMiddleware.
     # CORS preflight (OPTIONS) passes the size check as a no-op (no request body).
     application.add_middleware(BodySizeLimitMiddleware)
+
+    # Dashboard localhost enforcement (SEC-002).
+    # Registered LAST so it runs FIRST — before body reads, scan gates, or auth.
+    # Blocks all non-loopback access to /dashboard/* with HTTP 403.
+    # Closes the gap where proxy.host: 0.0.0.0 would expose the dashboard.
+    application.add_middleware(DashboardLocalhostMiddleware)
+
+    # Rate limiting middleware (SEC-007). Must be added after state.limiter is set.
+    application.add_middleware(SlowAPIMiddleware)
 
     # Register routers
     # root_router:   / (service discovery; registered first for priority)

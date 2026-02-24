@@ -242,30 +242,31 @@ class TestHealth200AfterReady:
                 body = client.get("/health").json()
         assert body["deployment_mode"] == "managed"
 
-    def test_health_200_has_audit_path_self_hosted(
+    def test_health_200_no_audit_path_self_hosted(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """audit_path is a string (not None) for self-hosted mode."""
+        """audit_path is NOT in /health response — SEC-006 (filesystem path disclosure)."""
         _patch_load_config(monkeypatch)
         application = create_app()
         env_without_supabase = {k: v for k, v in os.environ.items() if k != "SUPABASE_URL"}
         with patch.dict(os.environ, env_without_supabase, clear=True):
             with TestClient(application) as client:
                 body = client.get("/health").json()
-        assert "audit_path" in body
-        assert isinstance(body["audit_path"], str)
-        assert "audit.db" in body["audit_path"]
+        assert "audit_path" not in body, (
+            "audit_path must not be exposed via the unauthenticated /health endpoint "
+            "(SEC-006: filesystem path disclosure). Use the dashboard for diagnostics."
+        )
 
-    def test_health_200_audit_path_null_managed(
+    def test_health_200_no_audit_path_managed(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """audit_path is null for managed mode."""
+        """audit_path is NOT in /health response in managed mode either (SEC-006)."""
         _patch_load_config(monkeypatch)
         application = create_app()
         with patch.dict(os.environ, {"SUPABASE_URL": "https://example.supabase.co"}):
             with TestClient(application) as client:
                 body = client.get("/health").json()
-        assert body["audit_path"] is None
+        assert "audit_path" not in body
 
     def test_health_200_all_required_fields_present(
         self, monkeypatch: pytest.MonkeyPatch
@@ -284,7 +285,7 @@ class TestHealth200AfterReady:
             "avg_scan_ms",
             "queue_depth",
             "deployment_mode",
-            "audit_path",
+            # audit_path intentionally excluded — removed in SEC-006
         }
         missing = required - set(body.keys())
         assert not missing, f"Missing required /health fields: {missing}\nResponse: {body}"

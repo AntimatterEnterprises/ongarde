@@ -74,8 +74,9 @@ class TestMissingConfigFile:
         config = load_config(config_path="/nonexistent/path/config.yaml")
         assert config.scanner.mode == "full"
 
-    def test_missing_file_returns_default_proxy_host(self) -> None:
+    def test_missing_file_returns_default_proxy_host(self, tmp_path, monkeypatch) -> None:
         """Missing file → proxy.host defaults to '127.0.0.1'."""
+        monkeypatch.chdir(tmp_path)  # no .ongarde/config.yaml in tmp_path
         config = load_config(config_path="/nonexistent/path/config.yaml")
         assert config.proxy.host == "127.0.0.1"
 
@@ -85,13 +86,15 @@ class TestMissingConfigFile:
         config = load_config(config_path="/nonexistent/path/config.yaml")
         assert config.proxy.port == 4242
 
-    def test_missing_file_returns_default_upstream_openai(self) -> None:
+    def test_missing_file_returns_default_upstream_openai(self, tmp_path, monkeypatch) -> None:
         """Missing file → upstream.openai defaults to 'https://api.openai.com'."""
+        monkeypatch.chdir(tmp_path)  # no .ongarde/config.yaml in tmp_path
         config = load_config(config_path="/nonexistent/path/config.yaml")
         assert config.upstream.openai == "https://api.openai.com"
 
-    def test_missing_file_returns_default_upstream_anthropic(self) -> None:
+    def test_missing_file_returns_default_upstream_anthropic(self, tmp_path, monkeypatch) -> None:
         """Missing file → upstream.anthropic defaults to 'https://api.anthropic.com'."""
+        monkeypatch.chdir(tmp_path)  # no .ongarde/config.yaml in tmp_path
         config = load_config(config_path="/nonexistent/path/config.yaml")
         assert config.upstream.anthropic == "https://api.anthropic.com"
 

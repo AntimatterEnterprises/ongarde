@@ -277,7 +277,7 @@ class TestCreateKey:
             async with AsyncClient(
                 transport=ASGITransport(app=make_test_app()), base_url="http://test"
             ) as client:
-                response = await client.post("/dashboard/api/keys", json={"user_id": "default"})
+                response = await client.post("/dashboard/api/keys", json={})
 
         assert response.status_code == 200
         body = response.json()
@@ -311,7 +311,7 @@ class TestCreateKey:
         async with AsyncClient(
             transport=ASGITransport(app=make_unauth_app()), base_url="http://test"
         ) as client:
-            response = await client.post("/dashboard/api/keys", json={"user_id": "default"})
+            response = await client.post("/dashboard/api/keys", json={})
         assert response.status_code == 401
 
     async def test_create_key_limit_exceeded_returns_400(self) -> None:

@@ -99,9 +99,9 @@ class TestAuthBeforeScan:
         app, db = app_with_keys
         scan_calls = []
 
-        async def mock_scan(content, scan_pool, scan_id, audit_context):
+        async def mock_scan(content, scan_pool, scan_id, audit_context, **kwargs):
             scan_calls.append(True)
-            from app.models.scan import Action, RiskLevel, ScanResult
+            from app.models.scan import Action, ScanResult
             return ScanResult(action=Action.ALLOW, scan_id=scan_id)
 
         with patch("app.proxy.engine.scan_or_block", new=mock_scan):
@@ -128,9 +128,9 @@ class TestAuthBeforeScan:
         plaintext, _ = await create_api_key("user1", db)
         scan_calls = []
 
-        async def mock_scan(content, scan_pool, scan_id, audit_context):
+        async def mock_scan(content, scan_pool, scan_id, audit_context, **kwargs):
             scan_calls.append(True)
-            from app.models.scan import Action, RiskLevel, ScanResult
+            from app.models.scan import Action, ScanResult
             return ScanResult(action=Action.ALLOW, scan_id=scan_id)
 
         # Mock both scan AND upstream so we don't need a real LLM
@@ -158,7 +158,10 @@ class TestAuthBeforeScan:
                         headers={"X-OnGarde-Key": plaintext},
                     )
 
-        assert len(scan_calls) == 1, "Scanner should have been called once with a valid key"
+        assert len(scan_calls) >= 1, (
+            "Scanner should have been called at least once with a valid key "
+            "(request scan + optional response scan)"
+        )
 
 
 class TestHeaderStripping:
@@ -182,7 +185,7 @@ class TestHeaderStripping:
 
         import httpx
 
-        async def mock_scan(content, scan_pool, scan_id, audit_context):
+        async def mock_scan(content, scan_pool, scan_id, audit_context, **kwargs):
             from app.models.scan import Action, ScanResult
             return ScanResult(action=Action.ALLOW, scan_id=scan_id)
 

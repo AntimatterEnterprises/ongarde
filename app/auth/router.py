@@ -21,6 +21,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
+from app.auth.limiter import KEY_MANAGEMENT_RATE_LIMIT, limiter
 from app.auth.keys import (
     InvalidKeyError,
     KeyLimitExceededError,
@@ -42,10 +43,13 @@ router = APIRouter(tags=["api-keys"])
 
 
 class CreateKeyRequest(BaseModel):
-    """Request body for POST /dashboard/api/keys."""
+    """Request body for POST /dashboard/api/keys.
 
-    user_id: Optional[str] = None
-    """User ID for the key. Defaults to the authenticated user_id."""
+    Intentionally empty — user_id is always sourced from the authenticated
+    session (Depends(authenticate_request)), never from the request body.
+    Accepting user_id in the body would allow privilege escalation (any caller
+    creating keys attributed to arbitrary users). SEC-005.
+    """
 
 
 class RotateKeyRequest(BaseModel):
@@ -66,6 +70,7 @@ class RevokeKeyRequest(BaseModel):
 
 
 @router.get("/keys")
+@limiter.limit(KEY_MANAGEMENT_RATE_LIMIT)
 async def get_keys(
     request: Request,
     user_id: str = Depends(authenticate_request),
@@ -85,6 +90,7 @@ async def get_keys(
 
 
 @router.post("/keys")
+@limiter.limit(KEY_MANAGEMENT_RATE_LIMIT)
 async def create_key(
     body: CreateKeyRequest,
     request: Request,
@@ -96,9 +102,12 @@ async def create_key(
     the first API key. The plaintext key is returned once; subsequent
     GET /keys calls return only the masked form.
 
-    When ONGARDE_AUTH_REQUIRED=false (the default), user_id='anonymous' and
-    no existing key is required. This allows the CLI to create the first key
-    without a chicken-and-egg problem.
+    When ONGARDE_AUTH_REQUIRED=false (dev/test bypass mode), user_id='anonymous'
+    and no existing key is required. This allows the CLI init wizard to create
+    the first key without a chicken-and-egg problem.
+    In production (ONGARDE_AUTH_REQUIRED=true), the init wizard calls this
+    endpoint once during setup before a key exists — the first call is allowed
+    when the key store is empty (zero active keys for any user).
 
     Returns:
         JSON: {key, masked_key, id, message}
@@ -111,7 +120,9 @@ async def create_key(
 
     Story: E-007-S-001
     """
-    effective_user_id = body.user_id or user_id
+    # Always use the authenticated user_id — never accept user_id from the body
+    # (SEC-005: prevents privilege escalation / key attribution spoofing).
+    effective_user_id = user_id
 
     try:
         plaintext_key, _key_hash = await create_api_key(user_id=effective_user_id)
@@ -136,6 +147,7 @@ async def create_key(
 
 
 @router.post("/keys/rotate")
+@limiter.limit(KEY_MANAGEMENT_RATE_LIMIT)
 async def rotate_key(
     body: RotateKeyRequest,
     request: Request,
@@ -189,6 +201,7 @@ async def rotate_key(
 
 
 @router.post("/keys/revoke")
+@limiter.limit(KEY_MANAGEMENT_RATE_LIMIT)
 async def revoke_key(
     body: RevokeKeyRequest,
     request: Request,

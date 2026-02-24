@@ -878,7 +878,15 @@ class TestConcurrentPerformance:
     async def test_100_concurrent_no_pool_exhaustion(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """100 concurrent requests all complete successfully (no pool exhaustion)."""
+        """100 concurrent requests all complete successfully (no pool exhaustion).
+
+        Scanner is mocked to ALLOW so this purely tests HTTP connection pool
+        capacity — not Presidio throughput (which is environment-dependent
+        and covered by benchmarks/bench_proxy.py).
+        """
+        from unittest.mock import patch, AsyncMock
+        from app.models.scan import Action, ScanResult
+
         _patch_load_config(monkeypatch)
         call_count = [0]
 
@@ -892,20 +900,24 @@ class TestConcurrentPerformance:
         monkeypatch.setattr("app.main.create_http_client", lambda: mock_client)
         app = create_app()
 
+        async def mock_scan(content, scan_pool, scan_id, audit_context, **kwargs):
+            return ScanResult(action=Action.ALLOW, scan_id=scan_id)
+
         async with lifespan(app):
             transport = ASGITransport(app=app)  # type: ignore[arg-type]
-            async with AsyncClient(transport=transport, base_url="http://test") as session:
-                coros = [
-                    session.post("/v1/chat/completions", content=b"{}")
-                    for _ in range(100)
-                ]
-                responses = await asyncio.gather(*coros)
+            with patch("app.proxy.engine.scan_or_block", new=mock_scan):
+                async with AsyncClient(transport=transport, base_url="http://test") as session:
+                    coros = [
+                        session.post("/v1/chat/completions", content=b"{}")
+                        for _ in range(100)
+                    ]
+                    responses = await asyncio.gather(*coros)
 
         statuses = [r.status_code for r in responses]
         success_count = sum(1 for s in statuses if s == 200)
         assert success_count == 100, (
             f"Expected 100 successful responses, got {success_count}/100 "
-            f"(pool exhaustion or connection errors?)"
+            f"(pool exhaustion or connection errors?)\nStatuses: {set(statuses)}"
         )
         assert call_count[0] == 100, (
             f"Mock upstream received {call_count[0]} calls, expected 100"
@@ -1036,13 +1048,15 @@ class TestPathGuard:
         assert resp.status_code == 200
         assert len(mock.received_bodies) == 1
 
-    def test_dashboard_path_returns_404_not_proxied(
+    def test_dashboard_path_not_proxied_to_upstream(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """/dashboard → 404 (dashboard router not yet implemented; must not proxy)."""
+        """/dashboard is handled by the dashboard router — never proxied to upstream LLM."""
         mock = _MockUpstream()
         app = _build_test_app(mock, monkeypatch)
         with TestClient(app) as client:
             resp = client.get("/dashboard")
-        assert resp.status_code == 404
-        assert len(mock.received_bodies) == 0
+        # Dashboard now returns 200 (the SPA HTML); the critical invariant is
+        # that it is NEVER forwarded to the upstream LLM proxy.
+        assert resp.status_code != 502, "/dashboard must not be proxied upstream"
+        assert len(mock.received_bodies) == 0, "Dashboard request must not reach upstream"
