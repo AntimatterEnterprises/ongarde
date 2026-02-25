@@ -13,7 +13,7 @@ httpx>=0.26.0
 
 # Database & Authentication
 supabase>=2.3.0
-postgrest-py>=0.13.0
+# Note: postgrest-py was renamed to `postgrest` (no -py suffix); supabase pulls it in automatically
 
 # Security & PII Detection
 presidio-analyzer>=2.2.0

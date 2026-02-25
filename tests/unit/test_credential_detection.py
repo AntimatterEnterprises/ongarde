@@ -66,22 +66,22 @@ CREDENTIAL_POSITIVES = [
     # ── AWS ──────────────────────────────────────────────────────────────
     (
         "aws_akia",
-        "AKIAIOSFODNN7EXAMPLE",
+        "AKIA" + "IOSFODNN7EXAMPLE",  # Split to avoid secret scanning false positive
         "AWS AKIA Access Key ID",
     ),
     (
         "aws_asia",
-        "ASIAIOSFODNN7EXAMPLE",
+        "ASIA" + "IOSFODNN7EXAMPLE",  # Split to avoid secret scanning false positive
         "AWS ASIA temporary STS credential",
     ),
     (
         "aws_secret",
-        "aws_secret_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+        "aws_secret_access_key: " + "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
         "AWS Secret Access Key with context keyword",
     ),
     (
         "aws_secret_embedded",
-        "export AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+        "export AWS_SECRET_ACCESS_KEY=" + "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
         "AWS secret key as shell export",
     ),
 
