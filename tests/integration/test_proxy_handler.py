@@ -753,7 +753,13 @@ class TestConcurrentPerformance:
         If any blocking I/O existed on the event loop (e.g., sync httpx.Client), the
         100 requests would stack up. With async machinery, they interleave correctly
         and complete in milliseconds of wall-clock time.
+
+        Scanner is mocked to ALLOW — this test validates async concurrency/throughput,
+        not scanner accuracy (scanner behaviour is CI-environment-dependent due to the
+        hard 60ms timeout and Presidio NLP warm-up time on slow shared runners).
         """
+        from app.models.scan import Action, ScanResult
+
         _patch_load_config(monkeypatch)
 
         def fast_handler(request: httpx.Request) -> httpx.Response:
@@ -764,17 +770,21 @@ class TestConcurrentPerformance:
         monkeypatch.setattr("app.main.create_http_client", lambda: mock_client)
         app = create_app()
 
+        async def mock_scan(content, scan_pool, scan_id, audit_context, **kwargs):
+            return ScanResult(action=Action.ALLOW, scan_id=scan_id)
+
         async with lifespan(app):
             transport = ASGITransport(app=app)  # type: ignore[arg-type]
-            async with AsyncClient(transport=transport, base_url="http://test") as session:
-                # Time the total wall-clock for 100 concurrent requests
-                t0 = time.perf_counter()
-                coros = [
-                    session.post("/v1/chat/completions", content=b'{"model":"gpt-4"}')
-                    for _ in range(100)
-                ]
-                responses = await asyncio.gather(*coros)
-                wall_clock_ms = (time.perf_counter() - t0) * 1000
+            with patch("app.proxy.engine.scan_or_block", new=mock_scan):
+                async with AsyncClient(transport=transport, base_url="http://test") as session:
+                    # Time the total wall-clock for 100 concurrent requests
+                    t0 = time.perf_counter()
+                    coros = [
+                        session.post("/v1/chat/completions", content=b'{"model":"gpt-4"}')
+                        for _ in range(100)
+                    ]
+                    responses = await asyncio.gather(*coros)
+                    wall_clock_ms = (time.perf_counter() - t0) * 1000
 
         print(
             f"\nThroughput (100 concurrent, in-process):\n"
