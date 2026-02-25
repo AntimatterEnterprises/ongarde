@@ -863,15 +863,17 @@ class TestRetentionPruner:
 
 def test_no_sqlite3_import_in_audit_sqlite_backend() -> None:
     """sqlite_backend.py must not import sqlite3 synchronous module."""
-    import subprocess
-    result = subprocess.run(
-        ["grep", "-n", "import sqlite3", "app/audit/sqlite_backend.py"],
-        capture_output=True,
-        text=True,
-        cwd="/root/.openclaw/workspace/ongarde",
-    )
-    assert result.returncode != 0, (
+    from pathlib import Path
+    repo_root = Path(__file__).parent.parent.parent
+    target = repo_root / "app" / "audit" / "sqlite_backend.py"
+    source = target.read_text()
+    violations = [
+        f"  line {i + 1}: {line}"
+        for i, line in enumerate(source.splitlines())
+        if "import sqlite3" in line
+    ]
+    assert not violations, (
         "PROHIBITED: 'import sqlite3' found in app/audit/sqlite_backend.py. "
         "Use aiosqlite exclusively.\n"
-        f"Violations:\n{result.stdout}"
+        "Violations:\n" + "\n".join(violations)
     )
