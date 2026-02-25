@@ -814,7 +814,15 @@ class TestConcurrentPerformance:
         Measures: time from start of proxy_handler to invocation of upstream mock.
         This is the TRUE proxy overhead — no network, no ASGI routing overhead.
         Uses a shared timestamp dict to capture upstream invocation time.
+
+        Scanner is mocked to ALLOW — this test measures pure proxy routing overhead
+        (receive → scan gate → forward to upstream). Scanner latency is hardware-
+        dependent (Presidio NLP calibrates at startup) and is tested separately.
+        Including the real scanner would inflate measurements on slow CI runners and
+        defeat the purpose of detecting blocking-I/O in the proxy routing path.
         """
+        from app.models.scan import Action, ScanResult
+
         _patch_load_config(monkeypatch)
         call_timestamps: list[float] = []
         request_start: list[float] = []
@@ -830,19 +838,23 @@ class TestConcurrentPerformance:
         monkeypatch.setattr("app.main.create_http_client", lambda: mock_client)
         app = create_app()
 
+        async def mock_scan(content, scan_pool, scan_id, audit_context, **kwargs):
+            return ScanResult(action=Action.ALLOW, scan_id=scan_id)
+
         async with lifespan(app):
             transport = ASGITransport(app=app)  # type: ignore[arg-type]
-            async with AsyncClient(transport=transport, base_url="http://test") as session:
-                # Warm up
-                for _ in range(5):
-                    await session.post("/v1/chat/completions", content=b"{}")
-                call_timestamps.clear()
+            with patch("app.proxy.engine.scan_or_block", new=mock_scan):
+                async with AsyncClient(transport=transport, base_url="http://test") as session:
+                    # Warm up
+                    for _ in range(5):
+                        await session.post("/v1/chat/completions", content=b"{}")
+                    call_timestamps.clear()
 
-                # Measure 20 sequential single requests to get clean proxy timing
-                for _ in range(20):
-                    t_before = time.perf_counter()
-                    request_start.append(t_before)
-                    await session.post("/v1/chat/completions", content=b"{}")
+                    # Measure 20 sequential single requests to get clean proxy timing
+                    for _ in range(20):
+                        t_before = time.perf_counter()
+                        request_start.append(t_before)
+                        await session.post("/v1/chat/completions", content=b"{}")
 
         # Proxy overhead = time from initiating request to upstream receiving it.
         # In-process, this is typically < 1ms. We allow up to 5ms.
