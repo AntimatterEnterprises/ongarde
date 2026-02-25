@@ -5,6 +5,49 @@ All notable changes to OnGarde.io will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-02-25
+
+### Summary
+OnGarde 1.0.0 — first stable release. Runtime security proxy for self-hosted AI agent platforms.
+
+### Core Features
+- **Transparent proxy** — FastAPI async proxy with full OpenAI and Anthropic API compatibility,
+  SSE streaming preserved with zero degradation.
+- **Regex scanner** — Fast-path pattern engine (`< 1ms`) detects credentials, dangerous shell
+  commands, sensitive file references, and prompt injection markers. ReDoS-safe via `google-re2`.
+- **Presidio NLP scanner** — `en_core_web_sm`-based PII detection (credit cards, SSNs, email,
+  phone, crypto wallet addresses). Synchronous gate for inputs ≤ 512 chars (~28ms p99);
+  async advisory for longer inputs.
+- **API key authentication** — bcrypt-hashed keys with prefix `ong-`, rate-limited key management
+  endpoints, dashboard-only key creation and rotation.
+- **Web dashboard** — Localhost-only dashboard with status indicator, request/block counters,
+  scanner health, recent blocked events with risk breakdown, and false-positive suppression flow.
+- **Onboarding wizard** — `npx @ongarde/openclaw init` auto-configures OpenClaw `models.providers.baseUrl`
+  and creates the first API key. RAM-aware: suggests Lite mode (regex-only) on < 2 GB RAM hosts.
+- **Allowlist** — YAML-based allowlist with hot-reload via `watchfiles`. Three entry types:
+  `text_contains`, `regex`, and `rule_id`. Suppressed events logged as `ALLOW_SUPPRESSED`.
+- **Fail-safe model** — scanner errors and timeouts default to BLOCK (never silent pass-through).
+- **Local SQLite audit backend** — zero cloud dependency; audit log at `~/.ongarde/audit.db`.
+  Optional Supabase backend for managed deployments.
+
+### Security Hardening (from beta cycle)
+- Auth required by default (`ONGARDE_AUTH_REQUIRED=true`)
+- Dashboard restricted to loopback (`127.0.0.1`) only
+- Swagger UI disabled in production (`DEBUG=false`)
+- `audit_path` removed from `/health` response
+- Upstream URL validation blocks SSRF to private IP ranges
+- Rate limiting on `/dashboard/api/keys/*` (20 req/min/IP)
+- CI security scanning: `bandit` static analysis + `pip-audit` on every push
+
+### npm Package
+- `@ongarde/openclaw@1.0.0` published to npm
+- `npx @ongarde/openclaw init | status | stop | key create | key list | key revoke`
+
+### Python Package
+- `ongarde==1.0.0` published to PyPI
+
+---
+
 ## [1.0.0-beta.2] - 2026-02-24
 
 ### Security

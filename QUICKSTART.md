@@ -6,70 +6,61 @@ Get OnGarde running and protecting your AI agent in under 5 minutes.
 
 ## Prerequisites
 
-- **Python 3.12+** (for manual setup)
-- **Node.js 18+** (for the OpenClaw one-command installer)
-- A running self-hosted AI agent platform (OpenClaw, Agent Zero, LangChain, etc.)
-- An upstream LLM endpoint to proxy to (OpenAI, Anthropic, local Ollama, etc.)
+- **Python 3.12+**
+- **Node.js 18+** (Path A only — OpenClaw wizard)
+- A running agent platform (OpenClaw, Agent Zero, LangChain, etc.)
+- An upstream LLM endpoint to proxy to (OpenAI, Anthropic, Ollama, etc.)
 
 ---
 
 ## Installation
 
-### Option A — OpenClaw (One Command)
+### Path A — OpenClaw (One Command)
+
+> Requires Node.js 18+ and Python 3.12+ with `pip install ongarde[full]` available once the PyPI package is published.
 
 ```bash
 npx @ongarde/openclaw init
 ```
 
-This wizard:
-1. Installs and starts OnGarde
-2. Creates your first API key automatically
-3. Patches your OpenClaw `config.yaml` to route traffic through OnGarde
+The wizard:
+1. Detects your OpenClaw config
+2. Installs and starts OnGarde
+3. Creates your first API key
+4. Patches `config.yaml` → `models.providers.baseUrl: http://127.0.0.1:4242/v1`
+5. Runs a test block to confirm everything works
 
-No YAML editing, no manual configuration needed.
-
-### Option B — Manual Setup
-
-```bash
-# 1. Clone the repo
-git clone https://github.com/AntimatterEnterprises/ongarde.git
-cd ongarde
-
-# 2. Install Python dependencies
-pip install -r requirements.txt
-python -m spacy download en_core_web_sm
-
-# 3. Create your config files
-cp .env.example .env
-cp .ongarde/config.yaml.example .ongarde/config.yaml
-
-# 4. Edit .ongarde/config.yaml — set your upstream LLM URL
-#    Example for Ollama:  upstream: http://localhost:11434
-#    Example for OpenAI:  upstream: https://api.openai.com
-
-# 5. Start OnGarde
-python -m app.run
-```
-
-OnGarde binds to `http://127.0.0.1:4242` by default.
+No YAML editing, no manual key creation needed.
 
 ---
 
-## Configuration
+### Path B — Manual Setup (any platform)
 
-### API Authentication (Required by Default)
+**Prereqs:** Python 3.12+, git
 
-**`ONGARDE_AUTH_REQUIRED=true` is the default.** Every request to OnGarde must include a valid API key.
-
-#### Get your first API key
-
-**Via the init wizard (recommended):**
 ```bash
-npx @ongarde/openclaw init
-# The wizard prints your first key during setup.
+# 1. Clone
+git clone https://github.com/AntimatterEnterprises/ongarde.git
+cd ongarde
+
+# 2. Install dependencies (includes Presidio + spaCy)
+pip install -r requirements.txt
+python -m spacy download en_core_web_sm
+
+# 3. Configure
+cp .ongarde/config.yaml.example .ongarde/config.yaml
+# Edit .ongarde/config.yaml — set your upstream LLM URL:
+#   upstream: http://localhost:11434      # Ollama
+#   upstream: https://api.openai.com      # OpenAI
+
+# 4. Start
+python -m app.run
 ```
 
-**Via direct API call** (OnGarde must be running; auth is off only for this bootstrap call):
+OnGarde binds to `http://127.0.0.1:4242`.
+
+**Create your first API key** (bootstrap endpoint — unauthenticated on first call only):
+
 ```bash
 curl -X POST http://127.0.0.1:4242/dashboard/api/keys \
   -H "Content-Type: application/json" \
@@ -81,15 +72,39 @@ Response:
 {
   "key": "ong-xxxxxxxxxxxxxxxxxxxx",
   "name": "my-agent",
-  "created_at": "2026-02-24T19:00:00Z"
+  "created_at": "2026-02-25T00:00:00Z"
 }
 ```
 
 **Store the key — it is shown only once.**
 
-#### Pass the key in requests
+---
 
-Use either header format:
+### Path C — pip install *(coming soon)*
+
+> This is the cleanest production path once the PyPI package is published.
+
+```bash
+pip install ongarde[full]
+python -m spacy download en_core_web_sm
+```
+
+Then configure and run:
+
+```bash
+# Copy example config to your working directory
+cp $(python -c "import ongarde; import os; print(os.path.dirname(ongarde.__file__))")/.ongarde/config.yaml.example .ongarde/config.yaml
+# Edit .ongarde/config.yaml — set upstream URL
+python -m ongarde.run
+```
+
+---
+
+## API Authentication (Required by Default)
+
+**`ONGARDE_AUTH_REQUIRED=true` is the default.** Every request to OnGarde must include a valid API key.
+
+#### Pass the key in requests
 
 ```
 X-OnGarde-Key: ong-xxxxxxxxxxxxxxxxxxxx
@@ -99,14 +114,17 @@ or
 Authorization: Bearer ong-xxxxxxxxxxxxxxxxxxxx
 ```
 
+#### Disable auth (dev/testing only)
+
+Set `ONGARDE_AUTH_REQUIRED=false` in your environment before starting OnGarde.
+
 ---
 
 ## Point Your Agent at OnGarde
 
-Replace your agent's upstream LLM URL with OnGarde's local address. OnGarde works with **any OpenAI-compatible API** — the standard protocol used by OpenAI, Anthropic, Mistral, Groq, OpenRouter, Ollama, and most agent platforms:
+Replace your agent's upstream LLM URL with OnGarde's local address. Use your OnGarde key (`ong-xxxx`) as the `api_key` — not your upstream provider key.
 
 ```python
-# Any provider using the OpenAI-compatible API standard
 from openai import OpenAI
 
 client = OpenAI(
@@ -116,8 +134,8 @@ client = OpenAI(
 ```
 
 ```bash
-# Environment variable — works for all frameworks and SDKs
 export OPENAI_BASE_URL="http://localhost:4242/v1"
+export OPENAI_API_KEY="ong-xxxxxxxxxxxxxxxxxxxx"
 ```
 
 ```yaml
@@ -129,26 +147,35 @@ models:
 
 ---
 
+## Lite Mode (Low Memory)
+
+Full mode loads Presidio + spaCy (~1.5 GB RAM). Lite mode uses regex only (~200 MB RAM) — suitable for resource-constrained environments.
+
+In `.ongarde/config.yaml`:
+
+```yaml
+scanner:
+  mode: lite
+```
+
+Lite mode still catches credentials, shell commands, prompt injection, and sensitive file patterns. It skips NLP-based PII detection (SSNs, credit cards, names).
+
+---
+
 ## Verify It's Working
 
-### 1. Health check
+### Health check
 
 ```bash
 curl http://127.0.0.1:4242/health
 ```
 
-Expected response:
+Expected:
 ```json
-{
-  "status": "ok",
-  "proxy": "running",
-  "version": "1.0.0-beta.2"
-}
+{"status": "ok", "proxy": "running", "version": "1.0.0-beta.2"}
 ```
 
-### 2. Test a block
-
-Send a request containing a dangerous command and confirm OnGarde blocks it:
+### Test a block
 
 ```bash
 curl http://127.0.0.1:4242/v1/chat/completions \
@@ -160,28 +187,28 @@ curl http://127.0.0.1:4242/v1/chat/completions \
   }'
 ```
 
-Expected: `HTTP 400` with a block reason — OnGarde intercepted the dangerous command before it reached the LLM.
-
----
-
-## Environment Variable Reference
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `ONGARDE_AUTH_REQUIRED` | `true` | Require API key authentication on all requests. Set to `false` only for local dev/testing. |
-| `DEBUG` | `false` | Enable debug mode: re-enables `/docs` and `/redoc` Swagger UI, enables hot-reload. **Dev only.** |
-| `ONGARDE_PORT` | `4242` | Override the port OnGarde listens on. |
-| `ONGARDE_CONFIG` | (auto-detect) | Explicit path to your `.ongarde/config.yaml` file. |
-
-Set these in your `.env` file or as shell environment variables before starting OnGarde.
+Expected: `HTTP 400` with a block reason.
 
 ---
 
 ## Dashboard
 
-Open `http://localhost:4242/dashboard` in your browser to see live scan counts, blocked events, and manage API keys.
+Open `http://localhost:4242/dashboard` — live scan counts, blocked events, API key management.
 
-> **Note:** The dashboard is accessible from localhost only. Requests from remote IPs are rejected with HTTP 403. This is enforced at the code level.
+> **Localhost only.** Remote IPs are rejected with HTTP 403 at the code level.
+
+---
+
+## Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ONGARDE_AUTH_REQUIRED` | `true` | Require API key on all requests. `false` for local dev only. |
+| `ONGARDE_PORT` | `4242` | Override listen port. |
+| `ONGARDE_CONFIG` | (auto-detect) | Explicit path to `.ongarde/config.yaml`. |
+| `DEBUG` | `false` | Enable Swagger UI + hot-reload. Dev only. |
+
+Set as shell environment variables before starting OnGarde. A `.env` file is supported but optional — `config.yaml` is the primary configuration surface.
 
 ---
 

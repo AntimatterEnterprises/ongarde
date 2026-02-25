@@ -44,45 +44,51 @@ Automatically configures OnGarde as your OpenClaw proxy. No YAML editing require
 
 ### Manual Setup
 
+**Prerequisites:** Python 3.12+
+
 ```bash
 # Clone and install
 git clone https://github.com/AntimatterEnterprises/ongarde.git
 cd ongarde
 pip install -r requirements.txt
+python -m spacy download en_core_web_sm
 
 # Configure
-cp .env.example .env
 cp .ongarde/config.yaml.example .ongarde/config.yaml
-# Edit .ongarde/config.yaml with your upstream LLM URL
+# Edit .ongarde/config.yaml — set upstream: <your LLM URL>
 
 # Run
 python -m app.run
 ```
 
-Then point your agent at `http://localhost:4242`.
+Then create your first API key (unauthenticated on first call):
 
-OnGarde works with **any OpenAI-compatible API** — which is the standard protocol used by OpenAI, Anthropic, Mistral, Groq, Together AI, OpenRouter, Ollama, LM Studio, and most agent platforms:
+```bash
+curl -X POST http://127.0.0.1:4242/dashboard/api/keys \
+  -H "Content-Type: application/json" \
+  -d '{"name": "my-agent"}'
+# Returns: { "key": "ong-xxxxxxxxxxxxxxxxxxxx", ... }
+```
+
+OnGarde works with **any OpenAI-compatible API** — the standard protocol used by OpenAI, Anthropic, Mistral, Groq, Together AI, OpenRouter, Ollama, LM Studio, and most agent platforms:
 
 ```python
-# Works with any provider using the OpenAI-compatible API standard
+# Point your agent at OnGarde — use your OnGarde API key, not a provider key
 from openai import OpenAI
 
-# OpenAI
-client = OpenAI(api_key="sk-...", base_url="http://localhost:4242/v1")
-
-# Anthropic (OpenAI-compatible endpoint)
-client = OpenAI(api_key="sk-ant-...", base_url="http://localhost:4242/v1")
-
-# Groq, Together AI, OpenRouter, Mistral, etc.
-client = OpenAI(api_key="your-key", base_url="http://localhost:4242/v1")
+client = OpenAI(
+    api_key="ong-xxxxxxxxxxxxxxxxxxxx",   # your OnGarde key
+    base_url="http://localhost:4242/v1",
+)
 ```
 
 ```bash
 # Or set via environment variable — works for all frameworks and SDKs
 export OPENAI_BASE_URL="http://localhost:4242/v1"
+export OPENAI_API_KEY="ong-xxxxxxxxxxxxxxxxxxxx"
 ```
 
-> **Note:** The "OpenAI SDK" is the industry-standard protocol for LLM APIs — not just OpenAI. If your agent platform supports a `baseUrl` or `base_url` setting, OnGarde works with it.
+> **Note:** The `api_key` field here is your OnGarde API key (`ong-xxxx`), not your upstream provider key. OnGarde forwards requests to your configured upstream with its own auth.
 
 > **Authentication is on by default.** `ONGARDE_AUTH_REQUIRED=true` — every request requires an API key. The `npx @ongarde/openclaw init` wizard creates your first key automatically. For manual setup, see the [API key instructions in QUICKSTART.md](QUICKSTART.md#api-authentication-required-by-default).
 

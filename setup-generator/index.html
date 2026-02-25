@@ -1,0 +1,1432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OnGarde Setup Generator</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" />
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #0d0d14;
+      --surface:     #13131e;
+      --card:        #1a1a28;
+      --border:      #2a2a40;
+      --border-hi:   #3d3d60;
+      --accent:      #e8293c;
+      --accent-dim:  #a01c2a;
+      --accent-glow: rgba(232,41,60,0.15);
+      --green:       #34c579;
+      --yellow:      #f5a623;
+      --blue:        #4e9eff;
+      --text:        #dddde8;
+      --text-muted:  #7878a0;
+      --text-dim:    #4a4a68;
+      --input-bg:    #0f0f1a;
+      --radius:      6px;
+      --radius-lg:   10px;
+      --font:        'Inter', 'Segoe UI', system-ui, sans-serif;
+      --mono:        'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 13px;
+      line-height: 1.5;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ──────────────────────────────────────────────────── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+
+    .logo {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.3px;
+    }
+
+    .logo-sub {
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .header-badge {
+      margin-left: auto;
+      background: var(--accent-glow);
+      border: 1px solid var(--accent-dim);
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    /* ── Main Layout ─────────────────────────────────────────────── */
+    main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    /* ── Config Panel ─────────────────────────────────────────────── */
+    .config-panel {
+      width: 480px;
+      flex-shrink: 0;
+      overflow-y: auto;
+      border-right: 1px solid var(--border);
+      background: var(--surface);
+      padding: 0 0 80px 0;
+    }
+
+    .config-panel::-webkit-scrollbar { width: 6px; }
+    .config-panel::-webkit-scrollbar-track { background: transparent; }
+    .config-panel::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 3px; }
+
+    /* ── Sections ─────────────────────────────────────────────────── */
+    .section {
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-header {
+      padding: 14px 20px 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .section-icon { font-size: 14px; }
+
+    .section-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+    }
+
+    .section-chevron {
+      margin-left: auto;
+      color: var(--text-dim);
+      font-size: 10px;
+      transition: transform 0.15s;
+    }
+
+    .section.collapsed .section-chevron { transform: rotate(-90deg); }
+    .section.collapsed .section-body { display: none; }
+
+    .section-body {
+      padding: 4px 20px 16px;
+    }
+
+    /* ── Form Fields ─────────────────────────────────────────────── */
+    .field {
+      margin-bottom: 10px;
+    }
+
+    .field:last-child { margin-bottom: 0; }
+
+    .field-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .field-row .field { flex: 1; }
+
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="password"],
+    select,
+    textarea {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 13px;
+      padding: 7px 10px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent-dim);
+    }
+
+    input[type="password"] { font-family: var(--mono); letter-spacing: 2px; }
+
+    select { cursor: pointer; }
+
+    select option { background: var(--card); }
+
+    .field-hint {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 3px;
+    }
+
+    /* ── Radio Group ─────────────────────────────────────────────── */
+    .radio-group {
+      display: flex;
+      gap: 6px;
+    }
+
+    .radio-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 7px;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      transition: all 0.15s;
+    }
+
+    .radio-btn:has(input:checked) {
+      background: var(--accent-glow);
+      border-color: var(--accent-dim);
+      color: var(--text);
+    }
+
+    .radio-btn input { display: none; }
+
+    /* ── Checkboxes ──────────────────────────────────────────────── */
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .check-row:last-child { border-bottom: none; }
+
+    .check-row input[type="checkbox"] {
+      width: 15px;
+      height: 15px;
+      accent-color: var(--accent);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .check-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text);
+      flex: 1;
+    }
+
+    .check-desc {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .warn-badge {
+      background: rgba(245,166,35,0.15);
+      border: 1px solid rgba(245,166,35,0.3);
+      color: var(--yellow);
+      font-size: 10px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 3px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    /* ── Agent Rows ──────────────────────────────────────────────── */
+    .agent-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .agent-row:last-child { border-bottom: none; }
+
+    .agent-row input[type="checkbox"] {
+      width: 15px;
+      height: 15px;
+      accent-color: var(--accent);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .agent-role {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      width: 130px;
+      flex-shrink: 0;
+    }
+
+    .agent-row.disabled .agent-role { opacity: 0.4; }
+
+    .agent-name-input {
+      flex: 1;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 12px;
+      padding: 5px 8px;
+      outline: none;
+    }
+
+    .agent-name-input:focus { border-color: var(--accent-dim); }
+    .agent-row.disabled .agent-name-input { opacity: 0.35; pointer-events: none; }
+
+    /* ── Extra Providers ─────────────────────────────────────────── */
+    .provider-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+      align-items: center;
+    }
+
+    .provider-row input { flex: 1; }
+
+    .remove-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      border-radius: var(--radius);
+      cursor: pointer;
+      padding: 5px 8px;
+      font-size: 12px;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+
+    .remove-btn:hover { border-color: var(--accent-dim); color: var(--accent); }
+
+    .add-provider-btn {
+      background: var(--card);
+      border: 1px dashed var(--border-hi);
+      color: var(--text-muted);
+      border-radius: var(--radius);
+      cursor: pointer;
+      padding: 6px 12px;
+      font-size: 12px;
+      width: 100%;
+      text-align: left;
+      transition: all 0.15s;
+      margin-top: 4px;
+    }
+
+    .add-provider-btn:hover {
+      border-color: var(--accent-dim);
+      color: var(--text);
+    }
+
+    /* ── Preview Panel ────────────────────────────────────────────── */
+    .preview-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--bg);
+      min-width: 0;
+    }
+
+    .preview-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .preview-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .line-count {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .preview-actions {
+      margin-left: auto;
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: var(--radius);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      border: none;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover { background: #c2202f; }
+
+    .btn-secondary {
+      background: var(--card);
+      border: 1px solid var(--border-hi);
+      color: var(--text);
+    }
+
+    .btn-secondary:hover { border-color: var(--accent-dim); color: var(--accent); }
+
+    .btn-success {
+      background: rgba(52,197,121,0.15);
+      border: 1px solid rgba(52,197,121,0.4);
+      color: var(--green);
+    }
+
+    .code-scroll {
+      flex: 1;
+      overflow: auto;
+      padding: 0;
+    }
+
+    .code-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+    .code-scroll::-webkit-scrollbar-track { background: transparent; }
+    .code-scroll::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 4px; }
+
+    .code-scroll pre {
+      margin: 0 !important;
+      border-radius: 0 !important;
+      min-height: 100%;
+      font-family: var(--mono) !important;
+      font-size: 12px !important;
+      line-height: 1.6 !important;
+      background: #1d1f21 !important;
+      padding: 20px 24px !important;
+    }
+
+    .code-scroll code {
+      font-family: var(--mono) !important;
+      font-size: 12px !important;
+    }
+
+    /* ── Toast ────────────────────────────────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--green);
+      color: #0a2a16;
+      font-weight: 700;
+      font-size: 12px;
+      padding: 10px 18px;
+      border-radius: var(--radius);
+      opacity: 0;
+      transform: translateY(8px);
+      transition: all 0.2s;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    #toast.show { opacity: 1; transform: translateY(0); }
+
+    /* ── Scrollbar for code ──────────────────────────────────────── */
+    pre[class*="language-"] { tab-size: 2; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🤺 OnGarde Setup Generator</div>
+  <div class="logo-sub">AI Orchestrator Quick Start</div>
+  <div class="header-badge">POC v1</div>
+</header>
+
+<main>
+  <!-- ═══════════════════════════════════════════════════════════════
+       LEFT: CONFIGURATION PANEL
+  ════════════════════════════════════════════════════════════════ -->
+  <div class="config-panel">
+
+    <!-- ── 1. Environment ── -->
+    <div class="section" id="sec-env">
+      <div class="section-header" onclick="toggleSection('sec-env')">
+        <span class="section-icon">🖥️</span>
+        <span class="section-title">Environment</span>
+        <span class="section-chevron">▼</span>
+      </div>
+      <div class="section-body">
+        <div class="field">
+          <label>Operating System</label>
+          <select id="osVersion" onchange="generate()">
+            <option value="24.04">Ubuntu 24.04 LTS (Noble)</option>
+            <option value="22.04">Ubuntu 22.04 LTS (Jammy)</option>
+          </select>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Hostname</label>
+            <input type="text" id="hostname" placeholder="ongarde-server" oninput="generate()" />
+          </div>
+          <div class="field">
+            <label>VPS Public IP</label>
+            <input type="text" id="vpsIp" placeholder="203.0.113.10" oninput="generate()" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Timezone</label>
+          <select id="timezone" onchange="generate()">
+            <option value="UTC">UTC</option>
+            <option value="America/New_York">America/New_York</option>
+            <option value="America/Chicago">America/Chicago</option>
+            <option value="America/Los_Angeles">America/Los_Angeles</option>
+            <option value="America/Toronto">America/Toronto</option>
+            <option value="America/Vancouver">America/Vancouver</option>
+            <option value="Europe/London">Europe/London</option>
+            <option value="Europe/Paris">Europe/Paris</option>
+            <option value="Europe/Berlin">Europe/Berlin</option>
+            <option value="Asia/Tokyo">Asia/Tokyo</option>
+            <option value="Asia/Singapore">Asia/Singapore</option>
+            <option value="Australia/Sydney">Australia/Sydney</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 2. SSH Access ── -->
+    <div class="section" id="sec-ssh">
+      <div class="section-header" onclick="toggleSection('sec-ssh')">
+        <span class="section-icon">🔐</span>
+        <span class="section-title">SSH Access</span>
+        <span class="section-chevron">▼</span>
+      </div>
+      <div class="section-body">
+        <div class="field-row">
+          <div class="field">
+            <label>SSH User</label>
+            <input type="text" id="sshUser" placeholder="root" oninput="generate()" />
+          </div>
+          <div class="field" style="max-width:100px">
+            <label>Port</label>
+            <input type="number" id="sshPort" value="22" min="1" max="65535" oninput="generate()" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Auth Method</label>
+          <div class="radio-group">
+            <label class="radio-btn">
+              <input type="radio" name="sshAuth" value="password" checked onchange="toggleSshAuth(); generate();" />
+              🔑 Password
+            </label>
+            <label class="radio-btn">
+              <input type="radio" name="sshAuth" value="key" onchange="toggleSshAuth(); generate();" />
+              📄 SSH Key
+            </label>
+          </div>
+        </div>
+        <div class="field" id="sshPasswordField">
+          <label>Password</label>
+          <input type="password" id="sshPassword" placeholder="••••••••••••" oninput="generate()" />
+          <div class="field-hint">Used only for reference in the completion card. Not embedded in script.</div>
+        </div>
+        <div class="field" id="sshKeyField" style="display:none">
+          <label>Public Key (for authorized_keys)</label>
+          <textarea id="sshPubKey" rows="3" placeholder="ssh-ed25519 AAAA..." oninput="generate()" style="font-family:var(--mono);font-size:11px;resize:vertical"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 3. API Keys ── -->
+    <div class="section" id="sec-keys">
+      <div class="section-header" onclick="toggleSection('sec-keys')">
+        <span class="section-icon">🔑</span>
+        <span class="section-title">API Keys</span>
+        <span class="section-chevron">▼</span>
+      </div>
+      <div class="section-body">
+        <div class="field">
+          <label>Anthropic API Key</label>
+          <input type="password" id="anthropicKey" placeholder="sk-ant-…" oninput="generate()" />
+        </div>
+        <div class="field">
+          <label>OpenAI API Key</label>
+          <input type="password" id="openaiKey" placeholder="sk-…" oninput="generate()" />
+        </div>
+        <div id="extraProviders"></div>
+        <button class="add-provider-btn" onclick="addProvider()">+ Add Provider</button>
+      </div>
+    </div>
+
+    <!-- ── 4. Agents ── -->
+    <div class="section" id="sec-agents">
+      <div class="section-header" onclick="toggleSection('sec-agents')">
+        <span class="section-icon">🤖</span>
+        <span class="section-title">BMad Agents</span>
+        <span class="section-chevron">▼</span>
+      </div>
+      <div class="section-body" style="padding-bottom:4px">
+        <div id="agentsList"></div>
+      </div>
+    </div>
+
+    <!-- ── 5. Services & Security ── -->
+    <div class="section" id="sec-services">
+      <div class="section-header" onclick="toggleSection('sec-services')">
+        <span class="section-icon">⚙️</span>
+        <span class="section-title">Services &amp; Security</span>
+        <span class="section-chevron">▼</span>
+      </div>
+      <div class="section-body">
+
+        <div class="field-row">
+          <div class="field">
+            <label>OnGarde Port</label>
+            <input type="number" id="ongardePort" value="4242" min="1024" max="65535" oninput="generate()" />
+          </div>
+          <div class="field">
+            <label>OpenClaw Port</label>
+            <input type="number" id="openclawPort" value="18789" min="1024" max="65535" oninput="generate()" />
+          </div>
+          <div class="field">
+            <label>File Browser</label>
+            <input type="number" id="filebrowserPort" value="8080" min="1024" max="65535" oninput="generate()" />
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:4px">
+          <label>OpenClaw Gateway Bind</label>
+          <select id="openclawBind" onchange="generate()">
+            <option value="lan">LAN (all interfaces — VPS access)</option>
+            <option value="loopback">Loopback (localhost only)</option>
+            <option value="auto">Auto (detect best interface)</option>
+          </select>
+        </div>
+
+        <div class="field" style="margin-top:12px">
+          <label>Hardening</label>
+          <label class="check-row">
+            <input type="checkbox" id="enableUfw" checked onchange="generate()" />
+            <span class="check-label">UFW Firewall</span>
+            <span class="check-desc">Allow SSH + service ports only</span>
+          </label>
+          <label class="check-row">
+            <input type="checkbox" id="enableFail2ban" checked onchange="generate()" />
+            <span class="check-label">fail2ban</span>
+            <span class="check-desc">Brute-force SSH protection</span>
+          </label>
+          <label class="check-row">
+            <input type="checkbox" id="enableSshHarden" onchange="generate()" />
+            <span class="check-label">Harden SSH</span>
+            <span class="warn-badge">⚠ Key Auth Required</span>
+          </label>
+          <label class="check-row">
+            <input type="checkbox" id="enableAutoUpdates" checked onchange="generate()" />
+            <span class="check-label">Auto Security Updates</span>
+            <span class="check-desc">Unattended-upgrades</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /config-panel -->
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       RIGHT: PREVIEW PANEL
+  ════════════════════════════════════════════════════════════════ -->
+  <div class="preview-panel">
+    <div class="preview-header">
+      <span class="preview-label">Generated Script</span>
+      <span class="line-count" id="lineCount"></span>
+      <div class="preview-actions">
+        <button class="btn btn-secondary" onclick="copyScript()">📋 Copy</button>
+        <button class="btn btn-primary" onclick="downloadScript()">⬇ Download .sh</button>
+      </div>
+    </div>
+    <div class="code-scroll">
+      <pre><code class="language-bash" id="scriptOutput"></code></pre>
+    </div>
+  </div>
+
+</main>
+
+<div id="toast">✓ Copied to clipboard</div>
+
+<!-- ─────────────────────────────────────────────────────────────────
+     PRISM.JS
+──────────────────────────────────────────────────────────────── -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   AGENT DEFINITIONS
+══════════════════════════════════════════════════════════════════ */
+const AGENTS = [
+  { id: 'analyst',   role: 'Business Analyst',  defaultName: 'Mary',    file: 'agents/analyst.md',              checked: true  },
+  { id: 'pm',        role: 'Product Manager',   defaultName: 'John',    file: 'agents/product-manager.md',      checked: true  },
+  { id: 'architect', role: 'Architect',         defaultName: 'Winston', file: 'agents/architect.md',            checked: true  },
+  { id: 'developer', role: 'Developer',         defaultName: 'Amelia',  file: 'agents/developer.md',            checked: true  },
+  { id: 'qa',        role: 'QA Engineer',       defaultName: 'Quinn',   file: 'agents/qa-engineer.md',          checked: true  },
+  { id: 'scrum',     role: 'Scrum Master',      defaultName: 'Bob',     file: 'agents/scrum-master.md',         checked: true  },
+  { id: 'ux',        role: 'UX Designer',       defaultName: 'Sally',   file: 'agents/ux-designer.md',          checked: false },
+  { id: 'writer',    role: 'Tech Writer',       defaultName: 'Paige',   file: 'agents/tech-writer.md',          checked: false },
+  { id: 'quick',     role: 'Quick Dev',         defaultName: 'Barry',   file: 'agents/quick-flow-solo-dev.md',  checked: false },
+];
+
+/* ══════════════════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════════════════ */
+function init() {
+  // Build agent rows
+  const list = document.getElementById('agentsList');
+  if (!list) { console.error('agentsList not found'); return; }
+  AGENTS.forEach(agent => {
+    const row = document.createElement('div');
+    row.className = 'agent-row' + (agent.checked ? '' : ' disabled');
+    row.id = 'agentrow-' + agent.id;
+    row.innerHTML = `
+      <input type="checkbox" id="agent-${agent.id}" ${agent.checked ? 'checked' : ''}
+             onchange="toggleAgent('${agent.id}'); generate();" />
+      <span class="agent-role">${agent.role}</span>
+      <input type="text" class="agent-name-input" id="agentname-${agent.id}"
+             value="${agent.defaultName}" placeholder="${agent.defaultName}"
+             oninput="generate()" />
+    `;
+    list.appendChild(row);
+  });
+
+  generate();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+
+/* ══════════════════════════════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════════════════════════════ */
+function v(id)  { return document.getElementById(id)?.value?.trim() || ''; }
+function chk(id){ return document.getElementById(id)?.checked ?? false; }
+
+function toggleSection(id) {
+  document.getElementById(id).classList.toggle('collapsed');
+}
+
+function toggleSshAuth() {
+  const isKey = document.querySelector('input[name="sshAuth"]:checked').value === 'key';
+  document.getElementById('sshPasswordField').style.display = isKey ? 'none' : '';
+  document.getElementById('sshKeyField').style.display     = isKey ? '' : 'none';
+}
+
+function toggleAgent(id) {
+  const checked = document.getElementById('agent-' + id).checked;
+  document.getElementById('agentrow-' + id).classList.toggle('disabled', !checked);
+}
+
+let extraProviderCount = 0;
+function addProvider() {
+  const n = ++extraProviderCount;
+  const div = document.createElement('div');
+  div.className = 'provider-row';
+  div.id = 'extprov-' + n;
+  div.innerHTML = `
+    <input type="text"     placeholder="Provider name (e.g. gemini)" id="extprov-name-${n}" oninput="generate()" style="max-width:140px" />
+    <input type="password" placeholder="API Key"                     id="extprov-key-${n}"  oninput="generate()" />
+    <button class="remove-btn" onclick="removeProvider(${n})">✕</button>
+  `;
+  document.getElementById('extraProviders').appendChild(div);
+  generate();
+}
+
+function removeProvider(n) {
+  document.getElementById('extprov-' + n)?.remove();
+  generate();
+}
+
+function getExtraProviders() {
+  const result = [];
+  document.querySelectorAll('.provider-row').forEach(row => {
+    const n = row.id.replace('extprov-', '');
+    const name = v('extprov-name-' + n);
+    const key  = v('extprov-key-' + n);
+    if (name) result.push({ name, key });
+  });
+  return result;
+}
+
+function getSelectedAgents() {
+  return AGENTS
+    .filter(a => chk('agent-' + a.id))
+    .map(a => ({ ...a, name: v('agentname-' + a.id) || a.defaultName }));
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   COPY / DOWNLOAD
+══════════════════════════════════════════════════════════════════ */
+function getRawScript() {
+  return document.getElementById('scriptOutput').textContent;
+}
+
+function copyScript() {
+  navigator.clipboard.writeText(getRawScript()).then(() => {
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+    const btn = event.currentTarget;
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('btn-success');
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove('btn-success'); }, 2000);
+  });
+}
+
+function downloadScript() {
+  const blob = new Blob([getRawScript()], { type: 'text/x-sh' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  const hostname = v('hostname') || 'ongarde-server';
+  a.download = 'ongarde-install-' + hostname + '.sh';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   SCRIPT BUILDER
+══════════════════════════════════════════════════════════════════ */
+function generate() {
+  const cfg = {
+    osVersion:       v('osVersion')       || '24.04',
+    hostname:        v('hostname')        || 'ongarde-server',
+    vpsIp:           v('vpsIp')           || 'YOUR_VPS_IP',
+    timezone:        v('timezone')        || 'UTC',
+    sshUser:         v('sshUser')         || 'root',
+    sshPort:         v('sshPort')         || '22',
+    sshAuth:         document.querySelector('input[name="sshAuth"]:checked')?.value || 'password',
+    sshPubKey:       v('sshPubKey'),
+    anthropicKey:    v('anthropicKey'),
+    openaiKey:       v('openaiKey'),
+    extraProviders:  getExtraProviders(),
+    agents:          getSelectedAgents(),
+    openclawPort:    v('openclawPort')    || '18789',
+    ongardePort:     v('ongardePort')     || '4242',
+    filebrowserPort: v('filebrowserPort') || '8080',
+    openclawBind:    v('openclawBind')    || 'lan',
+    enableUfw:       chk('enableUfw'),
+    enableFail2ban:  chk('enableFail2ban'),
+    enableSshHarden: chk('enableSshHarden'),
+    enableAutoUpdates: chk('enableAutoUpdates'),
+  };
+
+  try {
+    const script = buildScript(cfg);
+    const el = document.getElementById('scriptOutput');
+    el.textContent = script;
+    if (typeof Prism !== 'undefined') {
+      Prism.highlightElement(el);
+    }
+    const lines = script.split('\n').length;
+    document.getElementById('lineCount').textContent = `${lines} lines`;
+  } catch(err) {
+    const el = document.getElementById('scriptOutput');
+    el.textContent = '# ⚠ Script generation error: ' + err.message + '\n# Check browser console (F12) for details.';
+    console.error('generate() error:', err);
+  }
+}
+
+/* ── Script Template ─────────────────────────────────────────── */
+function buildScript(c) {
+  const osName    = c.osVersion === '24.04' ? 'Ubuntu 24.04 LTS (Noble)' : 'Ubuntu 22.04 LTS (Jammy)';
+  const now       = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
+  const hasAnth   = !!c.anthropicKey;
+  const hasOai    = !!c.openaiKey;
+  const hasKeys   = hasAnth || hasOai || c.extraProviders.length > 0;
+
+  // ── OpenClaw config JSON ─────────────────────────────────────
+  const providersJson = buildProvidersJson(c);
+  const openclawJson  = JSON.stringify({
+    gateway: {
+      port: parseInt(c.openclawPort),
+      mode: 'local',
+      bind: c.openclawBind,
+      auth: {
+        mode: 'token',
+        token: '$(openssl rand -hex 24)'
+      }
+    },
+    models: {
+      providers: providersJson
+    }
+  }, null, 2).replace('"$(openssl rand -hex 24)"', '$(openssl rand -hex 24 | tr -d "\\n")');
+
+  // ── OnGarde config YAML ──────────────────────────────────────
+  const ongardeUpstreams = buildOngardeUpstreams(c);
+  const ongardeConfig    = buildOngardeConfig(c, ongardeUpstreams);
+
+  // ── Conditional blocks ───────────────────────────────────────
+  const sshHardenBlock   = c.enableSshHarden  ? buildSshHardenBlock(c)        : '# SSH hardening: skipped';
+  const fail2banBlock    = c.enableFail2ban   ? buildFail2banBlock(c)         : '# fail2ban: skipped';
+  const autoUpdatesBlock = c.enableAutoUpdates? buildAutoUpdatesBlock()        : '# Auto security updates: skipped';
+  const ufwBlock         = c.enableUfw        ? buildUfwBlock(c)              : '# UFW: skipped';
+  const sshKeyBlock      = (c.sshAuth === 'key' && c.sshPubKey)
+    ? `\n# ── Install provided SSH public key\nmkdir -p ~/.ssh && chmod 700 ~/.ssh\necho '${c.sshPubKey.replace(/'/g, "'\\''")}' >> ~/.ssh/authorized_keys\nchmod 600 ~/.ssh/authorized_keys\nok "SSH public key installed"`
+    : '';
+  const bmadBlock        = buildBmadBlock(c);
+  const apiKeyNote       = !hasKeys
+    ? `  warn "No API keys were set. Add them later:"\n  info "  nano ~/.openclaw/openclaw.json"`
+    : `  info "API keys configured for: ${[hasAnth?'Anthropic':'', hasOai?'OpenAI':'', ...c.extraProviders.map(p=>p.name)].filter(Boolean).join(', ')}"`;
+
+  return `#!/usr/bin/env bash
+# ==============================================================
+# OnGarde Quick Start Installer
+# Generated: ${now}
+# Target OS: ${osName}
+# Hostname:  ${c.hostname}
+# Agents:    ${c.agents.map(a => a.name + ' (' + a.role + ')').join(', ') || 'none selected'}
+# ==============================================================
+set -euo pipefail
+
+# ── Terminal colors
+RED='\\033[0;31m'; GREEN='\\033[0;32m'; YELLOW='\\033[1;33m'
+BLUE='\\033[0;34m'; CYAN='\\033[0;36m'; BOLD='\\033[1m'; NC='\\033[0m'
+log()  { echo -e "\\n\${BLUE}▶\${NC} \${BOLD}\$1\${NC}"; }
+ok()   { echo -e "  \${GREEN}✓\${NC} \$1"; }
+warn() { echo -e "  \${YELLOW}⚠\${NC} \$1"; }
+die()  { echo -e "\\n\${RED}✗ FATAL:\${NC} \$1\\n"; exit 1; }
+info() { echo -e "  \${CYAN}ℹ\${NC} \$1"; }
+
+# ── Configuration (generated)
+HOSTNAME="${c.hostname}"
+VPS_IP="${c.vpsIp}"
+TIMEZONE="${c.timezone}"
+SSH_PORT=${c.sshPort}
+OPENCLAW_PORT=${c.openclawPort}
+ONGARDE_PORT=${c.ongardePort}
+FILEBROWSER_PORT=${c.filebrowserPort}
+OPENCLAW_BIND="${c.openclawBind}"${hasAnth ? '\nANTHROPIC_API_KEY="' + c.anthropicKey + '"' : ''}${hasOai ? '\nOPENAI_API_KEY="' + c.openaiKey + '"' : ''}
+
+# ── Sanity checks
+[[ "$EUID" -ne 0 ]] && die "Run as root: sudo bash $0"
+command -v apt-get &>/dev/null || die "This script requires a Debian/Ubuntu system"
+${c.enableSshHarden ? `[[ "$SSH_AUTH_SOCK" == "" ]] && warn "SSH hardening enabled — ensure you have SSH key access before this completes"\n` : ''}
+echo -e "\${BOLD}🤺 OnGarde Stack Installer\${NC}"
+echo -e "   Target: \${BOLD}$HOSTNAME\${NC} (\${VPS_IP})"
+echo -e "   OS:     ${osName}"
+echo -e "   Agents: ${c.agents.length} configured"
+echo ""
+
+# ═══════════════════════════════════════════════════════════════
+log "Phase 1/7: System preparation"
+# ═══════════════════════════════════════════════════════════════
+export DEBIAN_FRONTEND=noninteractive
+
+apt-get update -qq
+apt-get upgrade -y -qq
+apt-get install -y -qq \\
+  curl git wget openssl build-essential \\
+  python3 python3-pip python3-venv \\
+  ufw fail2ban unattended-upgrades \\
+  ca-certificates gnupg lsb-release
+
+hostnamectl set-hostname "$HOSTNAME"
+timedatectl set-timezone "$TIMEZONE"
+${sshKeyBlock}
+ok "System prepared ($(uname -r))"
+
+# ═══════════════════════════════════════════════════════════════
+log "Phase 2/7: Security hardening"
+# ═══════════════════════════════════════════════════════════════
+${ufwBlock}
+
+${sshHardenBlock}
+
+${fail2banBlock}
+
+${autoUpdatesBlock}
+
+ok "Hardening complete"
+
+# ═══════════════════════════════════════════════════════════════
+log "Phase 3/7: Node.js + OpenClaw"
+# ═══════════════════════════════════════════════════════════════
+# Install Node.js LTS via NodeSource
+curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - >/dev/null 2>&1
+apt-get install -y -qq nodejs
+ok "Node.js $(node --version) installed"
+
+npm install -g openclaw --silent 2>/dev/null
+OPENCLAW_VER=$(openclaw --version 2>/dev/null || echo "installed")
+ok "OpenClaw $OPENCLAW_VER installed"
+
+# Configure OpenClaw
+mkdir -p ~/.openclaw ~/.openclaw/workspace
+
+# Generate secure gateway token
+GATEWAY_TOKEN=$(openssl rand -hex 24)
+
+cat > ~/.openclaw/openclaw.json << OCEOF
+{
+  "gateway": {
+    "port": ${c.openclawPort},
+    "mode": "local",
+    "bind": "${c.openclawBind}",
+    "auth": {
+      "mode": "token",
+      "token": "$GATEWAY_TOKEN"
+    }
+  },
+  "models": {
+    "providers": {
+      "anthropic": {${hasAnth ? `\n        "apiKey": "${c.anthropicKey}",` : ''}
+        "baseUrl": "http://127.0.0.1:${c.ongardePort}"
+      },
+      "openai": {${hasOai ? `\n        "apiKey": "${c.openaiKey}",` : ''}
+        "baseUrl": "http://127.0.0.1:${c.ongardePort}"
+      }
+    }
+  }
+}
+OCEOF
+ok "OpenClaw configured (gateway token stored)"
+
+# OpenClaw systemd service
+cat > /etc/systemd/system/openclaw.service << 'SVCEOF'
+[Unit]
+Description=OpenClaw AI Agent Gateway
+After=network.target ongarde.service
+Wants=ongarde.service
+
+[Service]
+Type=simple
+User=root
+Environment=HOME=/root
+ExecStart=/usr/bin/openclaw gateway start --bind ${c.openclawBind} --port ${c.openclawPort}
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+SVCEOF
+
+systemctl daemon-reload
+systemctl enable openclaw
+ok "OpenClaw service registered"
+
+# ═══════════════════════════════════════════════════════════════
+log "Phase 4/7: File Browser"
+# ═══════════════════════════════════════════════════════════════
+curl -fsSL https://raw.githubusercontent.com/filebrowser/get/master/get.sh | bash >/dev/null 2>&1
+ok "File Browser binary installed"
+
+# Generate secure File Browser password hash
+FB_PASS="$(openssl rand -base64 12)"
+FB_HASH=$(filebrowser hash "$FB_PASS" 2>/dev/null || echo '$2a$10$placeholder.hash')
+
+filebrowser config init \\
+  --address 0.0.0.0 \\
+  --port "${FILEBROWSER_PORT}" \\
+  --root ~/.openclaw/workspace \\
+  --database ~/.filebrowser.db >/dev/null 2>&1 || true
+
+filebrowser users add admin "$FB_PASS" --perm.admin \\
+  --database ~/.filebrowser.db >/dev/null 2>&1 || \\
+  filebrowser users update admin --password "$FB_PASS" \\
+    --database ~/.filebrowser.db >/dev/null 2>&1 || true
+
+# Store credentials for the completion card
+echo "$FB_PASS" > /root/.filebrowser_pass
+chmod 600 /root/.filebrowser_pass
+
+cat > /etc/systemd/system/filebrowser.service << SVCEOF
+[Unit]
+Description=File Browser — OnGarde Workspace
+After=network.target
+
+[Service]
+Type=simple
+User=root
+Environment=HOME=/root
+ExecStart=/usr/local/bin/filebrowser \\
+  --address 0.0.0.0 \\
+  --port ${c.filebrowserPort} \\
+  --root /root/.openclaw/workspace \\
+  --database /root/.filebrowser.db
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+SVCEOF
+
+systemctl daemon-reload
+systemctl enable filebrowser
+ok "File Browser configured (port ${c.filebrowserPort})"
+
+# ═══════════════════════════════════════════════════════════════
+log "Phase 5/7: OnGarde"
+# ═══════════════════════════════════════════════════════════════
+# Ensure Python 3.12+ is available
+PYTHON_BIN=""
+for bin in python3.12 python3.11 python3; do
+  if command -v "$bin" &>/dev/null; then
+    VER=$($bin -c "import sys; print(sys.version_info >= (3,11))" 2>/dev/null)
+    if [[ "$VER" == "True" ]]; then PYTHON_BIN="$bin"; break; fi
+  fi
+done
+[[ -z "$PYTHON_BIN" ]] && die "Python 3.11+ required. Install: apt-get install -y python3.12"
+ok "Python: $($PYTHON_BIN --version)"
+
+# Clone OnGarde from GitHub (main branch)
+if [[ -d /opt/ongarde/.git ]]; then
+  info "OnGarde repo exists — pulling latest main"
+  cd /opt/ongarde && git pull origin main -q
+else
+  git clone --depth=1 https://github.com/AntimatterEnterprises/ongarde.git /opt/ongarde -q
+fi
+ok "OnGarde source at /opt/ongarde"
+
+# Install in virtualenv
+cd /opt/ongarde
+$PYTHON_BIN -m venv .venv
+source .venv/bin/activate
+pip install -e ".[full]" -q
+ok "OnGarde Python dependencies installed"
+
+# Download spaCy language model (required for full scanner mode)
+python -m spacy download en_core_web_sm -q
+ok "spaCy model downloaded"
+
+# Write OnGarde config
+mkdir -p ~/.ongarde
+cat > ~/.ongarde/config.yaml << 'CFGEOF'
+${ongardeConfig}
+CFGEOF
+ok "OnGarde config written (~/.ongarde/config.yaml)"
+
+# OnGarde systemd service
+cat > /etc/systemd/system/ongarde.service << 'SVCEOF'
+[Unit]
+Description=OnGarde — AI Security Proxy
+After=network.target
+Before=openclaw.service
+
+[Service]
+Type=simple
+User=root
+Environment=HOME=/root
+WorkingDirectory=/opt/ongarde
+ExecStart=/opt/ongarde/.venv/bin/ongarde
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+SVCEOF
+
+systemctl daemon-reload
+systemctl enable ongarde
+ok "OnGarde service registered (port ${c.ongardePort})"
+
+# ═══════════════════════════════════════════════════════════════
+log "Phase 6/7: BMad Agents"
+# ═══════════════════════════════════════════════════════════════
+${bmadBlock}
+
+# ═══════════════════════════════════════════════════════════════
+log "Phase 7/7: Starting services"
+# ═══════════════════════════════════════════════════════════════
+# Start OnGarde first (OpenClaw depends on it)
+systemctl start ongarde
+info "Waiting for OnGarde to initialize..."
+sleep 4
+systemctl is-active ongarde &>/dev/null && ok "OnGarde running" || warn "OnGarde slow to start — check: journalctl -u ongarde -f"
+
+# Start File Browser
+systemctl start filebrowser
+sleep 1
+systemctl is-active filebrowser &>/dev/null && ok "File Browser running" || warn "File Browser: journalctl -u filebrowser -f"
+
+# Start OpenClaw
+systemctl start openclaw
+sleep 3
+systemctl is-active openclaw &>/dev/null && ok "OpenClaw running" || warn "OpenClaw slow to start — check: journalctl -u openclaw -f"
+
+# Load saved File Browser password
+FB_PASS=$(cat /root/.filebrowser_pass 2>/dev/null || echo "see /root/.filebrowser_pass")
+
+# ═══════════════════════════════════════════════════════════════
+# Completion card
+# ═══════════════════════════════════════════════════════════════
+echo ""
+echo -e "\${BOLD}\${GREEN}╔═══════════════════════════════════════════════════════╗\${NC}"
+echo -e "\${BOLD}\${GREEN}║      🤺  OnGarde Stack — Installation Complete!       ║\${NC}"
+echo -e "\${BOLD}\${GREEN}╚═══════════════════════════════════════════════════════╝\${NC}"
+echo ""
+echo -e "  \${BOLD}Service Access URLs\${NC}"
+echo -e "  ┌─────────────────────────────────────────────────────┐"
+echo -e "  │  OpenClaw Gateway    http://\${VPS_IP}:${c.openclawPort}            │"
+echo -e "  │  OnGarde Dashboard   http://\${VPS_IP}:${c.ongardePort}/dashboard   │"
+echo -e "  │  File Browser        http://\${VPS_IP}:${c.filebrowserPort}            │"
+echo -e "  └─────────────────────────────────────────────────────┘"
+echo ""
+echo -e "  \${BOLD}OpenClaw Gateway Token\${NC} (save this!)"
+echo -e "  \${CYAN}\${GATEWAY_TOKEN}\${NC}"
+echo ""
+echo -e "  \${BOLD}File Browser Login\${NC}"
+echo -e "  Username: \${BOLD}admin\${NC}   Password: \${CYAN}\${FB_PASS}\${NC}"
+echo -e "  \${YELLOW}⚠ Change the File Browser password after first login!\${NC}"
+echo ""
+echo -e "  \${BOLD}BMad Agents Installed\${NC} (${c.agents.length})"
+${c.agents.map(a => `echo -e "  • ${a.name.padEnd(12)} — ${a.role}"`).join('\n')}
+echo ""
+echo -e "  \${BOLD}Useful Commands\${NC}"
+echo -e "  \${CYAN}journalctl -u ongarde   -f\${NC}    # OnGarde logs"
+echo -e "  \${CYAN}journalctl -u openclaw  -f\${NC}    # OpenClaw logs"
+echo -e "  \${CYAN}journalctl -u filebrowser -f\${NC}  # File Browser logs"
+echo -e "  \${CYAN}systemctl status ongarde openclaw filebrowser\${NC}"
+echo ""
+${apiKeyNote}
+echo ""
+echo -e "\${BOLD}\${GREEN}  En Garde! 🤺\${NC}"
+echo ""
+`;
+}
+
+/* ── Block Builders ──────────────────────────────────────────── */
+function buildProvidersJson(c) {
+  const p = {};
+  if (c.anthropicKey || true) {
+    p.anthropic = {};
+    if (c.anthropicKey) p.anthropic.apiKey = c.anthropicKey;
+    p.anthropic.baseUrl = `http://127.0.0.1:${c.ongardePort}`;
+  }
+  if (c.openaiKey || true) {
+    p.openai = {};
+    if (c.openaiKey) p.openai.apiKey = c.openaiKey;
+    p.openai.baseUrl = `http://127.0.0.1:${c.ongardePort}`;
+  }
+  c.extraProviders.forEach(ep => {
+    if (ep.name) {
+      p[ep.name] = {};
+      if (ep.key) p[ep.name].apiKey = ep.key;
+      p[ep.name].baseUrl = `http://127.0.0.1:${c.ongardePort}`;
+    }
+  });
+  return p;
+}
+
+function buildOngardeUpstreams(c) {
+  const lines = [];
+  lines.push(`  openai:     "https://api.openai.com"`);
+  lines.push(`  anthropic:  "https://api.anthropic.com"`);
+  c.extraProviders.forEach(ep => {
+    if (ep.name) lines.push(`  # ${ep.name}: "https://api.example.com"  # configure upstream URL`);
+  });
+  return lines.join('\n');
+}
+
+function buildOngardeConfig(c, upstreams) {
+  return `# OnGarde configuration — generated by Setup Generator
+# Docs: https://github.com/AntimatterEnterprises/ongarde
+version: 1
+
+upstream:
+${upstreams}
+
+proxy:
+  host: "0.0.0.0"   # VPS deployment: accessible on all interfaces
+  port: ${c.ongardePort}
+
+scanner:
+  mode: "full"       # "full" (Presidio NLP) | "lite" (regex only, lower RAM)
+
+audit:
+  retention_days: 90
+  path: "~/.ongarde/audit.db"
+
+strict_mode: false`;
+}
+
+function buildUfwBlock(c) {
+  return `# ── UFW Firewall
+ufw default deny incoming
+ufw default allow outgoing
+ufw allow ${c.sshPort}/tcp   comment "SSH"
+ufw allow ${c.openclawPort}/tcp comment "OpenClaw"
+ufw allow ${c.ongardePort}/tcp comment "OnGarde"
+ufw allow ${c.filebrowserPort}/tcp comment "FileBrowser"
+ufw --force enable
+ok "UFW firewall active (allowed: SSH:${c.sshPort}, OpenClaw:${c.openclawPort}, OnGarde:${c.ongardePort}, FB:${c.filebrowserPort})"`;
+}
+
+function buildSshHardenBlock(c) {
+  const portChange = c.sshPort !== '22'
+    ? `\n# Update SSH port\nsed -i "s/^#Port 22/Port ${c.sshPort}/" /etc/ssh/sshd_config\nsed -i "s/^Port .*/Port ${c.sshPort}/" /etc/ssh/sshd_config`
+    : '';
+  return `# ── SSH Hardening  ⚠ Ensure SSH key access is set up before this runs!
+cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak.$(date +%s)
+
+# Disable root password login and password authentication
+sed -i 's/^#*PermitRootLogin.*/PermitRootLogin prohibit-password/' /etc/ssh/sshd_config
+sed -i 's/^#*PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
+sed -i 's/^#*ChallengeResponseAuthentication.*/ChallengeResponseAuthentication no/' /etc/ssh/sshd_config
+sed -i 's/^#*UsePAM.*/UsePAM no/' /etc/ssh/sshd_config${portChange}
+
+systemctl restart sshd
+ok "SSH hardened (password auth disabled, key-only)"`;
+}
+
+function buildFail2banBlock(c) {
+  return `# ── fail2ban
+cat > /etc/fail2ban/jail.local << 'F2BEOF'
+[DEFAULT]
+bantime  = 3600
+findtime = 600
+maxretry = 5
+
+[sshd]
+enabled  = true
+port     = ${c.sshPort}
+filter   = sshd
+logpath  = /var/log/auth.log
+maxretry = 3
+bantime  = 7200
+F2BEOF
+
+systemctl enable fail2ban
+systemctl restart fail2ban
+ok "fail2ban configured (SSH: 3 retries → 2h ban)"`;
+}
+
+function buildAutoUpdatesBlock() {
+  return `# ── Unattended security upgrades
+cat > /etc/apt/apt.conf.d/50unattended-upgrades << 'UUEOF'
+Unattended-Upgrade::Allowed-Origins {
+  "\${distro_id}:\${distro_codename}";
+  "\${distro_id}:\${distro_codename}-security";
+};
+Unattended-Upgrade::AutoFixInterruptedDpkg "true";
+Unattended-Upgrade::MinimalSteps "true";
+Unattended-Upgrade::Remove-Unused-Dependencies "true";
+Unattended-Upgrade::Automatic-Reboot "false";
+UUEOF
+
+cat > /etc/apt/apt.conf.d/20auto-upgrades << 'UUEOF'
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
+UUEOF
+ok "Automatic security updates enabled"`;
+}
+
+function buildBmadBlock(c) {
+  if (c.agents.length === 0) {
+    return `warn "No agents selected — skipping BMad install"
+info "You can install BMad later: git clone https://github.com/OpenClawRocks/bmad-openclaw.git ~/.openclaw/workspace/bmad-openclaw"`;
+  }
+
+  const agentTableLines = c.agents.map(a =>
+    `| ${a.name.padEnd(10)} | ${a.role.padEnd(18)} | bmad-openclaw/${a.file} |`
+  ).join('\n');
+
+  const agentListLines = c.agents.map(a =>
+    `echo -e "  ▸ ${a.name} — ${a.role}"  >> ~/.openclaw/workspace/AGENTS.md`
+  ).join('\n');
+
+  const soulLines = c.agents.map(a =>
+    `# Agent: ${a.name} (${a.role})\nmkdir -p ~/.openclaw/workspace/agents/${a.id}\ncat > ~/.openclaw/workspace/agents/${a.id}/IDENTITY.md << 'EOF'\n# ${a.name} — ${a.role}\n\nYou are **${a.name}**, the **${a.role}** on this project.\n\nYour BMad workflow reference: \`bmad-openclaw/${a.file}\`\n\nRead your role file at the start of every task and follow its workflow strictly.\nEOF`
+  ).join('\n\n');
+
+  return `# Clone BMad framework
+if [[ -d ~/.openclaw/workspace/bmad-openclaw/.git ]]; then
+  info "BMad repo exists — updating"
+  cd ~/.openclaw/workspace/bmad-openclaw && git pull origin main -q
+else
+  git clone --depth=1 https://github.com/OpenClawRocks/bmad-openclaw.git \\
+    ~/.openclaw/workspace/bmad-openclaw -q
+fi
+ok "BMad framework installed ($(ls ~/.openclaw/workspace/bmad-openclaw/agents/*.md 2>/dev/null | wc -l) agent files)"
+
+# Create workspace AGENTS.md with selected agent roster
+cat > ~/.openclaw/workspace/AGENTS.md << 'AGEOF'
+# AGENTS.md — BMad Agent Roster
+
+This workspace is configured with the following BMad agents.
+
+## Active Agents
+
+| Name       | Role               | BMad Reference                |
+|------------|--------------------|-------------------------------|
+${agentTableLines}
+
+## Usage
+
+Spawn any agent in a task:
+\`\`\`
+sessions_spawn label=my-task task="Read the product brief and ..."
+\`\`\`
+
+Agents follow their role file in \`bmad-openclaw/agents/\`.
+AGEOF
+ok "AGENTS.md created with ${c.agents.length} agents"
+
+# Create per-agent IDENTITY files
+${soulLines}
+
+ok "Agent identities configured: ${c.agents.map(a => a.name).join(', ')}"`;
+}
+
+</script>
+</body>
+</html>

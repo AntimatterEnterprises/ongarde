@@ -45,6 +45,7 @@ htmlcov/
 .cache
 nosetests.xml
 coverage.xml
+coverage/
 *.cover
 *.py,cover
 .hypothesis/
@@ -184,6 +185,10 @@ cython_debug/
 # Node.js
 node_modules/
 *.lock
+*.tgz
+
+# npm publish temp auth file (created/deleted by tools/publish.sh)
+packages/openclaw/.npmrc
 
 # Exclude packages/openclaw from Python patterns
 !packages/
