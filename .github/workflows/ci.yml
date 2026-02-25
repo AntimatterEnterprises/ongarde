@@ -41,8 +41,8 @@ jobs:
         # Checks all installed packages against the OSV vulnerability database.
         # Fails if any known CVEs are found in production dependencies.
         run: |
-          pip install -r requirements.txt
-          pip-audit --requirement requirements.txt --strict
+          pip install -e ".[full]"
+          pip-audit
 
   # ── Tests ─────────────────────────────────────────────────────────────────
   test:
@@ -64,8 +64,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
-          pip install -e ".[dev]"
+          pip install -e ".[dev,full]"
+          python -m spacy download en_core_web_sm
 
       - name: Run test suite
         env:
