@@ -7,8 +7,23 @@ name = "ongarde"
 version = "1.0.0"
 description = "OnGarde — Runtime content security layer for self-hosted AI agent platforms"
 readme = "README.md"
-license = { file = "LICENSE" }
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.12"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Internet :: Proxy Servers",
+    "Topic :: Security",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Topic :: System :: Networking",
+    "Typing :: Typed",
+    "Operating System :: OS Independent",
+]
 
 dependencies = [
     # Core proxy
@@ -53,6 +68,12 @@ dev = [
     "bandit>=1.7.0",
     "pip-audit>=2.7.0",
 ]
+
+[project.urls]
+Homepage = "https://ongarde.io"
+Repository = "https://github.com/AntimatterEnterprises/ongarde"
+Issues = "https://github.com/AntimatterEnterprises/ongarde/issues"
+Changelog = "https://github.com/AntimatterEnterprises/ongarde/blob/main/CHANGELOG.md"
 
 [project.scripts]
 ongarde = "app.run:main"

@@ -1,117 +1,91 @@
 # @ongarde/openclaw
 
-> **OnGarde CLI** — Install, configure, and manage the OnGarde runtime content security proxy.
+> **OnGarde CLI for OpenClaw** — Install, configure, and run the OnGarde runtime content security proxy in seconds.
 
-This npm package is implemented in **E-007** (Onboarding Flow, Sprint 4).  
-This file documents the **`/health` endpoint contract** that the `start` subcommand depends on.
+[![npm version](https://img.shields.io/npm/v/@ongarde/openclaw)](https://www.npmjs.com/package/@ongarde/openclaw)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+OnGarde is a lightweight, self-hosted security proxy that sits between your AI agent platform (like [OpenClaw](https://ongarde.io)) and your LLM provider. It scans every request and response for PII, prompt injection, policy violations, and custom rules — with sub-50 ms overhead.
 
 ---
 
-## Installation
+## Quick Start
+
+No global install needed. Just run:
 
 ```bash
 npx @ongarde/openclaw init
 ```
 
+The `init` wizard will:
+1. Check prerequisites (Python 3.12+, pip)
+2. Install the `ongarde` Python package
+3. Generate a default config (`~/.ongarde/config.yaml`)
+4. Configure your AI platform to route through the proxy
+
 ---
 
-## `npx @ongarde/openclaw start`
+## Commands
 
-Starts the OnGarde proxy and waits until it is ready to accept traffic.
+| Command | Description |
+|---------|-------------|
+| `npx @ongarde/openclaw init` | Interactive setup wizard (first-time onboarding) |
+| `npx @ongarde/openclaw start` | Start the proxy and wait until it's ready |
+| `npx @ongarde/openclaw status` | Show current proxy status and health metrics |
+| `npx @ongarde/openclaw uninstall` | Stop proxy and restore your original AI platform config |
 
-### Exit behaviour
+---
 
-| Condition | Exit code |
-|-----------|-----------|
-| `/health` returns HTTP 200 within 30 seconds of process start | **0** (success) |
-| Timeout: 30 seconds elapsed without a 200 response | **1** (failure) |
-| OnGarde process exits with a non-zero code during startup | **1** (failure) |
+## Prerequisites
 
-### Health check polling
+- **Node.js** 18 or later
+- **Python** 3.12 or later
+- **pip** (comes with Python)
 
-- Polls `GET http://localhost:4242/health` every **500 ms**
-- Accepts **HTTP 200** with `"status": "ok"` as the ready signal
-- **HTTP 503** (`"status": "starting"`) means startup is still in progress — continue polling
-- Any other status code or network error: retry until timeout
+The `init` command will check these automatically and tell you what to install if anything is missing.
 
-### Ready signal specification
+---
 
-The `/health` endpoint (implemented in `app/health.py`, E-001-S-007) returns:
+## How It Works
 
-**HTTP 503 — not ready** (body wrapped in `{"error": {...}}` by the global exception handler):
-```json
-{
-  "error": {
-    "status": "starting",
-    "scanner": "initializing",
-    "message": "OnGarde is starting up. Scanner warming up..."
-  }
-}
+OnGarde acts as a transparent HTTP proxy between your AI client and your LLM provider:
+
+```
+AI Agent / OpenClaw
+        │
+        ▼
+  OnGarde Proxy  ←── scans requests & responses
+  (localhost:4242)    • PII detection
+        │             • Prompt injection detection
+        ▼             • Custom allow/block rules
+   LLM Provider       • Audit logging
+  (OpenAI, etc.)
 ```
 
-**HTTP 200 — ready** (all fields present):
-```json
-{
-  "status": "ok",
-  "proxy": "running",
-  "scanner": "healthy",
-  "scanner_mode": "full",
-  "connection_pool_size": 100,
-  "avg_scan_ms": 0.0,
-  "queue_depth": 0,
-  "deployment_mode": "self-hosted",
-  "audit_path": "/root/.ongarde/audit.db"
-}
+Configuration is done via `~/.ongarde/config.yaml`. Full documentation at [ongarde.io](https://ongarde.io).
+
+---
+
+## Python Package
+
+This CLI installs the `ongarde` Python package behind the scenes. If you prefer to manage it directly:
+
+```bash
+pip install ongarde
+ongarde  # start the proxy
 ```
 
-The `start` command MUST poll for HTTP 200 (not parse the JSON body) — the status code
-is the authoritative ready signal.
+---
 
-### Implementation note for E-007
+## Links
 
-The `start` subcommand must:
-
-1. Spawn the proxy process (e.g. `uvicorn app.main:app --host 127.0.0.1 --port 4242 ...`)
-2. Enter a polling loop:
-   ```
-   deadline = now() + 30_000ms
-   while now() < deadline:
-       try:
-           response = GET http://localhost:4242/health (timeout: 2s)
-           if response.status == 200:
-               print("✓ OnGarde ready. En Garde. 🤺")
-               exit(0)
-       except NetworkError:
-           pass  # proxy not yet listening — continue polling
-       sleep(500ms)
-   print("✗ Timeout: OnGarde did not become ready within 30 seconds.")
-   exit(1)
-   ```
-3. Also monitor the spawned process PID; if it exits non-zero before `/health` returns
-   200, exit 1 immediately with the proxy's stderr output.
+- 🌐 **Website:** [ongarde.io](https://ongarde.io)
+- 📦 **PyPI:** [pypi.org/project/ongarde](https://pypi.org/project/ongarde/)
+- 🐛 **Issues:** [github.com/AntimatterEnterprises/ongarde/issues](https://github.com/AntimatterEnterprises/ongarde/issues)
+- 📖 **Source:** [github.com/AntimatterEnterprises/ongarde](https://github.com/AntimatterEnterprises/ongarde)
 
 ---
 
-## Other subcommands
+## License
 
-| Command | Description | Story |
-|---------|-------------|-------|
-| `npx @ongarde/openclaw init` | 4-step onboarding wizard | E-007-S-001 |
-| `npx @ongarde/openclaw start` | Start proxy + wait for ready | E-007-S-006 |
-| `npx @ongarde/openclaw status` | Show current proxy status | E-007-S-006 |
-| `npx @ongarde/openclaw uninstall` | Stop proxy, restore baseUrl | E-007-S-006 |
-
----
-
-## Health endpoint reference
-
-Full specification: `app/health.py`
-
-| Endpoint | Ready? | Description |
-|----------|--------|-------------|
-| `GET /health` | Any | Primary health check. 503 during startup, 200 when ready. |
-| `GET /health/scanner` | Any | Detailed scanner metrics. 503 during startup, 200 when ready. |
-
----
-
-*Package scaffold implemented in E-007-S-001. This README delivers the AC-E001-10 exit gate contract (E-001-S-007).*
+MIT © [OnGarde](https://ongarde.io)
