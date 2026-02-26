@@ -4,7 +4,7 @@
   "description": "OnGarde CLI — Install, configure, and manage the OnGarde runtime content security proxy",
   "main": "src/index.js",
   "bin": {
-    "ongarde": "./bin/ongarde.js"
+    "ongarde": "bin/ongarde.js"
   },
   "files": [
     "bin/",
@@ -33,7 +33,7 @@
   "homepage": "https://ongarde.io",
   "repository": {
     "type": "git",
-    "url": "https://github.com/AntimatterEnterprises/ongarde.git"
+    "url": "git+https://github.com/AntimatterEnterprises/ongarde.git"
   },
   "bugs": {
     "url": "https://github.com/AntimatterEnterprises/ongarde/issues"

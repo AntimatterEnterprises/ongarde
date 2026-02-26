@@ -30,5 +30,3 @@ Open `index.html` directly in a browser (no server required) or host it statical
 | File | Description |
 |------|-------------|
 | `index.html` | Main setup generator UI and script generator logic |
-| `BACKLOG.md` | Feature backlog and roadmap |
-| `UX-ASSESSMENT.md` | UX audit by the OnGarde team (February 2026) |

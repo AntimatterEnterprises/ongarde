@@ -224,3 +224,12 @@ demo/logs/
 # Community posts / internal marketing assets
 community-posts/
 marketing/
+
+# Internal planning & audit documents — never publish
+docs/install-audit.md
+setup-generator/BACKLOG.md
+setup-generator/UX-ASSESSMENT.md
+**/BACKLOG.md
+**/*-audit.md
+**/*-assessment.md
+**/*-assessment-*.md
