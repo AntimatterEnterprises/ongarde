@@ -94,6 +94,18 @@ export OPENAI_API_KEY="ong-xxxxxxxxxxxxxxxxxxxx"
 
 See [QUICKSTART.md](QUICKSTART.md) for full setup details.
 
+### Optional: Secure Remote Access (Tailscale)
+
+By default, the OnGarde dashboard is localhost-only. For secure remote access without opening ports to the internet, [Tailscale](https://tailscale.com) is the recommended approach — it creates a private encrypted network between your devices.
+
+Once Tailscale is installed and running, expose the dashboard to your tailnet with one command:
+
+```bash
+tailscale serve http://127.0.0.1:4242
+```
+
+→ [Tailscale installation guide](https://tailscale.com/download)
+
 ---
 
 ## Performance
@@ -148,7 +160,7 @@ Once running, open `http://localhost:4242/dashboard` to see:
 - Scanner health and quota status
 - API key management
 
-> **Localhost only.** The dashboard is accessible exclusively from the local machine. Requests from remote IPs are rejected with HTTP 403, enforced at the code level.
+> **Localhost only.** The dashboard is accessible exclusively from the local machine. Requests from remote IPs are rejected with HTTP 403, enforced at the code level. For secure remote access, see [Tailscale](#optional-secure-remote-access-tailscale).
 
 ---
 
